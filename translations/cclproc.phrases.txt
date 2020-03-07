@@ -1,0 +1,50 @@
+"Phrases"
+{
+    "TeamTAll"
+    {
+        "ru"                "{T}(T)"
+        "en"                "{T}(T)"
+    }
+
+    "TeamT"
+    {
+        "ru"                "{T}(Private T)"
+        "en"                "{T}(Private T)"
+    }
+
+    "TeamCTAll"
+    {
+        "ru"                "{T}(CT)"
+        "en"                "{T}(CT)"
+    }
+
+    "TeamCT"
+    {
+        "ru"                "{T}(Private CT)"
+        "en"                "{T}(Private CT)"
+    }
+
+    "TeamSPECAll"
+    {
+        "ru"                "{T}(SPEC)"
+        "en"                "{T}(SPEC)"
+    }
+
+    "TeamSPEC"
+    {
+        "ru"                "{T}(Private SPEC)"
+        "en"                "{T}(Private SPEC)"
+    }
+
+    "ClientStatus_Alive"
+    {
+        "ru"                "{G}•"
+        "en"                "{G}•"
+    }
+
+    "ClientStatus_Died"
+    {
+        "ru"                "{R}•"
+        "en"                "{R}•"
+    }
+}
