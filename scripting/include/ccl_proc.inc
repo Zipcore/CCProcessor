@@ -8,7 +8,12 @@
 forward void ccl_proc_RebuildString(int iClient, const char[] szBind, char[] szBuffer, int iSize);
 
 /* Message sended to client (non rcon say "msg") */
-forward void ccl_proc_OnServerMsg(char[] szMessage, int MsgLen);
+forward bool ccl_proc_OnServerMsg(char[] szMessage, int MsgLen);
+
+forward void ccl_config_parsed();
+
+native ArrayList ccl_drop_triggers();
+native void ccl_clear_allcolors(char[] szBuffer, int iSize);
 
 public SharedPlugin __pl_ccl_proc= 
 {
@@ -24,6 +29,7 @@ public SharedPlugin __pl_ccl_proc=
 #if !defined REQUIRE_PLUGIN
 public void __pl_ccl_proc_SetNTVOptional()
 {
-	
+	MarkNativeAsOptional("ccl_drop_triggers");
+	MarkNativeAsOptional("ccl_clear_allcolors");
 }
 #endif

@@ -47,4 +47,89 @@
         "ru"                "{R}•"
         "en"                "{R}•"
     }
+
+    "Color_white"
+    {
+        "ru"                "{W}Белый"
+        "en"                "{W}White"
+    }
+
+    "Color_red"
+    {
+        "ru"                "{R}Красный"
+        "en"                "{R}Red"
+    }
+
+    "Color_team"
+    {
+        "ru"                "{T}Командный"
+        "en"                "{T}Team"
+    }
+
+    "Color_green"
+    {
+        "ru"                "{G}Зеленый"
+        "en"                "{G}Green"
+    }
+
+    "Color_lime"
+    {
+        "ru"                "{L}Лайм"
+        "en"                "{L}Lime"
+    }
+
+    "Color_lightgreen"
+    {
+        "ru"                "{LG}Светло-зеленый"
+        "en"                "{LG}Light green"
+    }
+
+    "Color_lightred"
+    {
+        "ru"                "{LR}Светло - красный"
+        "en"                "{LR}Light red"
+    }
+
+    "Color_gray"
+    {
+        "ru"                "{GR}Серый"
+        "en"                "{GR}Gray"
+    }
+
+    "Color_lightolive"
+    {
+        "ru"                "{LO}Светло-оливковый"
+        "en"                "{LO}Light olive"
+    }
+
+    "Color_lightblue"
+    {
+        "ru"                "{LB}Светло-синий"
+        "en"                "{LB}Light blue"
+    }
+
+    "Color_blue"
+    {
+        "ru"                "{B}Синий"
+        "en"                "{B}Blue"
+    }
+
+    "Color_purple"
+    {
+        "ru"                "{P}Фиолетовый"
+        "en"                "{P}Purple"
+    }
+
+    "Color_darkred"
+    {
+        "ru"                "{DR}Темно-красный"
+        "en"                "{DR}Dark red"
+    }
+
+    "Color_gold"
+    {
+        "ru"                "{GO}Золотой"
+        "en"                "{GO}Gold"
+    }
+
 }

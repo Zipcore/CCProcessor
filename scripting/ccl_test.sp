@@ -86,10 +86,12 @@ public void ccl_proc_RebuildString(int iClient, const char[] szBind, char[] szBu
     }
 }
 
-public void ccl_proc_OnServerMsg(char[] szMessage, int MsgLen)
+public bool ccl_proc_OnServerMsg(char[] szMessage, int MsgLen)
 {
     if(IsEnabled_Server)
     {
         Format(szMessage, MsgLen, "%s%s", GREEN, szMessage);
     }
+
+    return true;
 }
