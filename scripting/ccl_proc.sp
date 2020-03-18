@@ -5,7 +5,7 @@
 
 #define PlugName "CCLProcessor"
 #define PlugDesc "Extended color chat processor"
-#define PlugVer "1.0.5 Beta"
+#define PlugVer "1.0.6 Beta"
 
 #include std
 
@@ -24,7 +24,6 @@ ArrayList aPhrases;
 
 char szGameFolder[PMP];
 char msgPrototype[2][64];
-
 
 ArrayList dClient;
 
@@ -238,6 +237,9 @@ public Action MsgText_CB(UserMsg msg_id, Handle msg, const int[] players, int pl
         PbReadString(msg, "params", SZ(szMessage), 1);
     }
 
+    if(!clProc_SkipColors(iIndex))
+        clProc_ClearColors(SZ(szMessage));
+
     GetMessageByPrototype(iIndex, GetClientTeam(iIndex), (iIndex) ? IsPlayerAlive(iIndex) : false, ToAll, SZ(szName), SZ(szMessage), SZ(szBuffer));
     
     TrimString(szMessage);
@@ -414,5 +416,19 @@ bool clProc_ServerMsg(char[] szMessage, int iSize)
     Call_Finish(Send);
 
     return Send;
+}
+
+bool clProc_SkipColors(int iClient)
+{
+    static Handle gf;
+    if(!gf)
+        gf = CreateGlobalForward("ccl_proc_SkipColorsInMsg", ET_Hook, Param_Cell);
+    
+    bool skip = false;
+    Call_StartForward(gf);
+    Call_PushCell(iClient);
+    Call_Finish(skip);
+
+    return skip;
 }
 

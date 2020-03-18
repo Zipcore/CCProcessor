@@ -3,11 +3,20 @@
 #endif
 #define _ccl_proc_included
 
-/* Prototype properties of the client message */
-/* const char[] szBind = {TEAM}, {NAME}, {MSG}, {STATUS} */
+
+/* 
+	Skip color keys in a client message? 
+	Calling before ccl_proc_RebuildString()
+*/
+forward bool ccl_proc_SkipColorsInMsg(int iClient);
+
+/* 
+	Prototype properties of the client message
+	const char[] szBind = {TEAM}, {NAME}, {MSG}, {STATUS}
+*/
 forward void ccl_proc_RebuildString(int iClient, const char[] szBind, char[] szBuffer, int iSize);
 
-/* Message sended to client (non rcon say "msg") */
+/* Message sended by server */
 forward bool ccl_proc_OnServerMsg(char[] szMessage, int MsgLen);
 
 forward void ccl_config_parsed();
