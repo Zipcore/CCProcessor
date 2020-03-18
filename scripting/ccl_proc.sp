@@ -5,21 +5,22 @@
 
 #define PlugName "CCLProcessor"
 #define PlugDesc "Extended color chat processor"
-#define PlugVer "1.0.4 Beta"
+#define PlugVer "1.0.5 Beta"
 
 #include std
 
 #define SETTINGS_PATH "configs/c_var/%s.ini"
 
-EngineVersion eEngine;
+//EngineVersion eEngine;
 
 /* CSGO: Proto - SayText2, CSS OB: BF - SayText2 */
 UserMessageType umType;
 
-/* Key:Color*/
+/* Key:Color */
 ArrayList aTriggers;
 
-//ArrayList aPhrases;
+/* Key:Translation */
+ArrayList aPhrases;
 
 char szGameFolder[PMP];
 char msgPrototype[2][64];
@@ -29,17 +30,14 @@ ArrayList dClient;
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {    
-    eEngine = GetEngineVersion();
-
-    if(eEngine != Engine_CSGO && eEngine != Engine_CSS)
-        return APLRes_Failure;
+    //eEngine = GetEngineVersion();
 
     umType = GetUserMessageType();
 
     HookUserMessage(GetUserMessageId("TextMsg"), ServerMsg_CB, true);
     HookUserMessage(GetUserMessageId("SayText2"), MsgText_CB, true, SayTextComp);
 
-    CreateNative("ccl_drop_triggers", Native_DropTriggers);
+    CreateNative("ccl_drop_list", Native_DropTriggers);
     CreateNative("ccl_clear_allcolors", Native_ClearAllColors);
 
     RegPluginLibrary("ccl_proc");
@@ -53,9 +51,9 @@ public void OnPluginStart()
     LoadTranslations("cclproc.phrases");
 
     aTriggers = new ArrayList(64, 0);
+    aPhrases = new ArrayList(64, 0);
 
     dClient = new ArrayList(512, 0);
-    //aPhrases = new ArrayList(64, 0);
 }
 
 public void OnMapStart()
@@ -68,7 +66,8 @@ public void OnMapStart()
     ReadConfig(szPath);
 }
 
-char szSection[64];
+// 0 - Global, 1 - Triggers, 2 - Phrases
+int Section;
 
 void ReadConfig(const char[] szPath)
 {
@@ -76,6 +75,7 @@ void ReadConfig(const char[] szPath)
 
     SMCParser smParser = new SMCParser();
     smParser.OnKeyValue = OnValueRead;
+    smParser.OnEnterSection = OnSection;
     smParser.OnEnd = OnParseEnded;
 
     if(!FileExists(szPath))
@@ -87,32 +87,50 @@ void ReadConfig(const char[] szPath)
         LogError("Error On parse: %s | Line: %d", szPath, iLine);
 }
 
+SMCResult OnSection(SMCParser smc, const char[] name, bool opt_quotes)
+{
+    if(!strcmp(name, "Triggers"))
+        Section = 1;
+    
+    else if(!strcmp(name, "Phrases"))
+        Section = 2;
+    
+    else Section = 0;
+    return SMCParse_Continue;
+}
+
 SMCResult OnValueRead(SMCParser smc, const char[] sKey, const char[] sValue, bool bKey_Quotes, bool bValue_quotes)
 {
     if(!sKey[0] || !sValue[0])
         return SMCParse_Continue;
-    
-    static char szBuffer[16];
 
-    if(!strcmp(sKey, "Chat_PrototypeTeam"))
-        strcopy(msgPrototype[0], sizeof(msgPrototype[]), sValue);
-    
-    else if(!strcmp(sKey, "Chat_PrototypeAll"))
-        strcopy(msgPrototype[1], sizeof(msgPrototype[]), sValue);
+    switch(Section)
+    {
+        case 1:
+        {
+            char szBuffer[16];
 
+            aTriggers.PushString(sKey);
 
-    if(strlen(sValue) > 7)
-        return SMCParse_Continue;
+            if(strlen(sValue) > 3)
+                FormatEx(SZ(szBuffer), "\x07%s", sValue);
+            else
+                FormatEx(SZ(szBuffer), "%c", StringToInt(sValue));
 
-    aTriggers.PushString(sKey);
+            aTriggers.PushString(szBuffer);
+        }
 
-    
-    if(strlen(sValue) > 3)
-        FormatEx(SZ(szBuffer), "\x07%s", sValue);
-    else
-        FormatEx(SZ(szBuffer), "%c", StringToInt(sValue));
+        case 2:
+        {
+            if(aTriggers.FindString(sKey) == -1)
+                return SMCParse_Continue;
 
-    aTriggers.PushString(szBuffer);
+            aPhrases.PushString(sKey);
+            aPhrases.PushString(sValue);
+        }
+
+        default: strcopy(msgPrototype[strcmp(sKey, "Chat_PrototypeTeam") != 0], sizeof(msgPrototype[]), sValue);
+    }
 
     return SMCParse_Continue;
 }
@@ -142,9 +160,9 @@ public Action ServerMsg_CB(UserMsg msg_id, Handle msg, const int[] players, int 
     if(!umType) BfReadString(msg, SZ(szBuffer));
     else PbReadString(msg, "params", SZ(szBuffer), 0);
 
-    if(!clProc_ServerMsg(SZ(szBuffer)))
+    if(!clProc_ServerMsg(SZ(szBuffer)) || strlen(szBuffer) == 0)
         return Plugin_Handled;
-
+    
     clProc_Replace(SZ(szBuffer));
     
     Format(SZ(szBuffer), "%c %s", 1, szBuffer);
@@ -155,7 +173,7 @@ public Action ServerMsg_CB(UserMsg msg_id, Handle msg, const int[] players, int 
         return Plugin_Continue;
     }
 
-    ArrayList arr = new ArrayList(512, 0);
+    ArrayList arr = new ArrayList(PMP, 0);
     arr.Push(Msg_type);
     arr.PushString(szBuffer);
     arr.PushArray(players, playersNum);
@@ -167,7 +185,7 @@ public Action ServerMsg_CB(UserMsg msg_id, Handle msg, const int[] players, int 
 
 public void OnFrRequest(any data)
 {
-    char szMessage[512];
+    char szMessage[PMP];
     view_as<ArrayList>(data).GetString(1, SZ(szMessage));
 
     int[] players = new int[view_as<ArrayList>(data).Get(3)];
@@ -224,10 +242,7 @@ public Action MsgText_CB(UserMsg msg_id, Handle msg, const int[] players, int pl
     
     TrimString(szMessage);
     if(!szMessage[0])
-    {
-        LogMessage("Proc Message: %s", szMessage);
         return Plugin_Handled;
-    }
         
     clProc_Replace(SZ(szBuffer));
 
@@ -359,7 +374,7 @@ public int Native_ClearAllColors(Handle hPlugin, int iArgs)
 
 public int Native_DropTriggers(Handle hPlugins, int iArgs)
 {
-    return view_as<int>(aTriggers.Clone());
+    return view_as<int>(GetNativeCell(1) == 0 ? aTriggers.Clone() : aPhrases.Clone());
 }
 
 void clPoc_ParseEnded()
