@@ -36,8 +36,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
     HookUserMessage(GetUserMessageId("TextMsg"), ServerMsg_CB, true);
     HookUserMessage(GetUserMessageId("SayText2"), MsgText_CB, true, SayTextComp);
 
-    CreateNative("ccl_drop_list", Native_DropTriggers);
-    CreateNative("ccl_clear_allcolors", Native_ClearAllColors);
+    CreateNative("cc_drop_list", Native_DropTriggers);
+    CreateNative("cc_clear_allcolors", Native_ClearAllColors);
 
     RegPluginLibrary("ccprocessor");
 
@@ -388,7 +388,7 @@ void clPoc_ParseEnded()
 {
     static Handle gf;
     if(!gf)
-        gf = CreateGlobalForward("ccl_config_parsed", ET_Ignore);
+        gf = CreateGlobalForward("cc_config_parsed", ET_Ignore);
     
     Call_StartForward(gf);
     Call_Finish();
@@ -398,7 +398,7 @@ void clProc_RebuildString(int iClient, const char[] szBind, char[] szMessage, in
 {
     static Handle gf;
     if(!gf)
-        gf = CreateGlobalForward("ccl_proc_RebuildString", ET_Ignore, Param_Cell, Param_String, Param_String, Param_Cell);
+        gf = CreateGlobalForward("cc_proc_RebuildString", ET_Ignore, Param_Cell, Param_String, Param_String, Param_Cell);
     
     Call_StartForward(gf);
     Call_PushCell(iClient);
@@ -412,7 +412,7 @@ bool clProc_ServerMsg(char[] szMessage, int iSize)
 {
     static Handle gf;
     if(!gf)
-        gf = CreateGlobalForward("ccl_proc_OnServerMsg", ET_Hook, Param_String, Param_Cell);
+        gf = CreateGlobalForward("cc_proc_OnServerMsg", ET_Hook, Param_String, Param_Cell);
     
     bool Send = true;
     Call_StartForward(gf);
@@ -427,7 +427,7 @@ bool clProc_SkipColors(int iClient)
 {
     static Handle gf;
     if(!gf)
-        gf = CreateGlobalForward("ccl_proc_SkipColorsInMsg", ET_Hook, Param_Cell);
+        gf = CreateGlobalForward("cc_proc_SkipColorsInMsg", ET_Hook, Param_Cell);
     
     bool skip = false;
     Call_StartForward(gf);
@@ -441,7 +441,7 @@ Action clProc_BroadcastMessage()
 {
     static Handle gf;
     if(!gf)
-        gf = CreateGlobalForward("ccl_proc_OnUsernameChangedMsg", ET_Hook);
+        gf = CreateGlobalForward("cc_proc_OnUsernameChangedMsg", ET_Hook);
     
     Action aDo = Plugin_Continue;
     Call_StartForward(gf);
