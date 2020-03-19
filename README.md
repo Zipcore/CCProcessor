@@ -1,12 +1,13 @@
-CCL Processor [![Build Status](https://travis-ci.org/Nullent/CCLProcessor.svg?branch=dev)](https://discord.gg/ChTyPUG)
+CCProcessor [![Build Status](https://travis-ci.org/Nullent/CCLProcessor.svg?branch=dev)](https://discord.gg/ChTyPUG)
 ============
-**CCL Processor** - расширенный цветовой процессор игрового чата.
+**CCProcessor** - расширенный цветовой процессор игрового чата.
 
 Поддерживаемые игры:
 ---------
 - CS:GO
 - CS:S OB
-- TF2 (#TODO)
+- TF2?
+- L4D2?
 
 Требования:
 -------------
