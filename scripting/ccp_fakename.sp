@@ -1,6 +1,6 @@
 #pragma newdecls required
 
-#include ccl_proc
+#include ccprocessor
 
 #define STANDART_INFO
 
@@ -58,7 +58,7 @@ public void OnClientPostAdminCheck(int iClient)
     ClientFlags[iClient] = GetUserFlagBits(iClient);
 }
 
-public void ccl_proc_RebuildString(int iClient, const char[] szBind, char[] szBuffer, int iSize)
+public void cc_proc_RebuildString(int iClient, const char[] szBind, char[] szBuffer, int iSize)
 {
     if(!strcmp(szBind, "{NAME}") && fakename[iClient][0])
         FormatEx(szBuffer, iSize, fakename[iClient]);
@@ -75,6 +75,6 @@ bool IsValidClient(int iClient)
     else if(!AccessFlag)
         return false;
     
-    return (ClientFlags[iClient] & AccessFlag);
+    return (ClientFlags[iClient] & AccessFlag) ? true : false;
 }
 

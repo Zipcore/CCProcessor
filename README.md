@@ -1,4 +1,4 @@
-CCL Processor
+CCL Processor [![Build Status](https://travis-ci.org/Nullent/CCLProcessor.svg?branch=dev)](https://discord.gg/ChTyPUG)
 ============
 **CCL Processor** - расширенный цветовой процессор игрового чата.
 

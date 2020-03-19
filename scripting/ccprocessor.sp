@@ -3,7 +3,7 @@
 
 #define STANDART_INFO
 
-#define PlugName "CCLProcessor"
+#define PlugName "CCProcessor"
 #define PlugDesc "Extended color chat processor"
 #define PlugVer "1.0.7 Beta"
 
@@ -39,7 +39,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
     CreateNative("ccl_drop_list", Native_DropTriggers);
     CreateNative("ccl_clear_allcolors", Native_ClearAllColors);
 
-    RegPluginLibrary("ccl_proc");
+    RegPluginLibrary("ccprocessor");
 
     return APLRes_Success;
 }
@@ -47,7 +47,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 public void OnPluginStart()
 {
     GetGameFolderName(SZ(szGameFolder));
-    LoadTranslations("cclproc.phrases");
+    LoadTranslations("ccproc.phrases");
 
     aTriggers = new ArrayList(64, 0);
     aPhrases = new ArrayList(64, 0);

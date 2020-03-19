@@ -1,0 +1,19 @@
+Plugin(source='scripting/ccprocessor.sp')
+Plugin(source='scripting/ccp_test.sp', deps=['ccprocessor'])
+Plugin(source='scripting/ccp_fakename.sp', deps=['ccprocessor'])
+
+Package(name='ccproc-base',
+        plugins=['ccprocessor'],
+)
+
+Package(name='ccproc-all',
+        plugins=['ccprocessor', 'ccp_test', 'ccp_fakename'],
+)
+
+Package(name='ccproc-release',
+        extends=['ccproc-all'],
+        disabled_plugins=['ccp_test', 'ccp_fakename'],
+        filegroups={
+            '.': ['LICENSE' , 'README.md'],
+        },
+)

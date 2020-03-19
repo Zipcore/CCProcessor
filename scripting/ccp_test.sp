@@ -1,6 +1,6 @@
 #pragma newdecls required
 
-#include ccl_proc
+#include ccprocessor
 
 #define GREEN   "{G}"
 #define RED     "{R}"
@@ -73,7 +73,7 @@ public Action cmd_ccl_say(int iClient, int iArgs)
     return Plugin_Handled;
 }
 
-public void ccl_proc_RebuildString(int iClient, const char[] szBind, char[] szBuffer, int iSize)
+public void cc_proc_RebuildString(int iClient, const char[] szBind, char[] szBuffer, int iSize)
 {
     if(!strcmp(szBind, "{MSG}") && IsEnabled_Msg[iClient])
     {
@@ -86,7 +86,7 @@ public void ccl_proc_RebuildString(int iClient, const char[] szBind, char[] szBu
     }
 }
 
-public bool ccl_proc_OnServerMsg(char[] szMessage, int MsgLen)
+public bool cc_proc_OnServerMsg(char[] szMessage, int MsgLen)
 {
     if(IsEnabled_Server)
     {
