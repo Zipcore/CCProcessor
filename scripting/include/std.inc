@@ -42,6 +42,7 @@ public Plugin myinfo =
 #define FORITER(%0,%1,%2) for(int %0 = %1; %0 < %2; %0++)
 #define BUILD(%0,%1) BuildPath(Path_SM, SZ(%0), %1)
 #define HOOKCVAR(%0,%1) %0(FindConVar(%1), NULL_STRING, NULL_STRING)
+#define CVAR_CHANGE(%0) public void %0(ConVar cvar, const char[] szOldVal, const char[] szNewVal)
 
 #define PMP PLATFORM_MAX_PATH
 #define MPL MAXPLAYERS+1
