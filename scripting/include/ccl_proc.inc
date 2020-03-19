@@ -19,7 +19,14 @@ forward void ccl_proc_RebuildString(int iClient, const char[] szBind, char[] szB
 /* Message sended by server */
 forward bool ccl_proc_OnServerMsg(char[] szMessage, int MsgLen);
 
+/* On config parsed success */
 forward void ccl_config_parsed();
+
+/* 
+	Called when sending a message about changing the player's nickname 
+	@ return 	Plugin_Continue - send msg / Plugin_Handle - otherwise 
+*/
+forward Action ccl_proc_OnUsernameChangedMsg();
 
 native ArrayList ccl_drop_list(bool IsTriggers);
 

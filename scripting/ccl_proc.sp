@@ -5,7 +5,7 @@
 
 #define PlugName "CCLProcessor"
 #define PlugDesc "Extended color chat processor"
-#define PlugVer "1.0.6 Beta"
+#define PlugVer "1.0.7 Beta"
 
 #include std
 
@@ -154,7 +154,7 @@ public Action ServerMsg_CB(UserMsg msg_id, Handle msg, const int[] players, int 
     if(Msg_type != 3)
         return Plugin_Continue;
 
-    static char szBuffer[PMP];
+    char szBuffer[PMP];
 
     if(!umType) BfReadString(msg, SZ(szBuffer));
     else PbReadString(msg, "params", SZ(szBuffer), 0);
@@ -207,11 +207,11 @@ public Action MsgText_CB(UserMsg msg_id, Handle msg, const int[] players, int pl
      **
      **/
 
-    static char szName[MNL];
-    static char szMessage[PMP];
-    static int iIndex;
+    char szName[MNL];
+    char szMessage[PMP];
+    int iIndex;
 
-    char szBuffer[512];
+    char szBuffer[448];
     bool ToAll;
 
     iIndex = (!umType) ? BfReadByte(msg) : PbReadInt(msg, "ent_idx");
@@ -223,6 +223,10 @@ public Action MsgText_CB(UserMsg msg_id, Handle msg, const int[] players, int pl
         BfReadByte(msg);
         BfReadString(msg, SZ(szName));
     }
+    else PbReadString(msg, "msg_name", SZ(szName));
+
+    if(StrContains(szName, "Cstrike_Name_Change") != -1)
+        return clProc_BroadcastMessage();
 
     ToAll = (!umType) ? StrContains(szName, "_All") != -1 : PbReadBool(msg, "textallchat");
 
@@ -237,6 +241,7 @@ public Action MsgText_CB(UserMsg msg_id, Handle msg, const int[] players, int pl
         PbReadString(msg, "params", SZ(szMessage), 1);
     }
 
+    clProc_ClearColors(SZ(szName));
     if(!clProc_SkipColors(iIndex))
         clProc_ClearColors(SZ(szMessage));
 
@@ -432,3 +437,15 @@ bool clProc_SkipColors(int iClient)
     return skip;
 }
 
+Action clProc_BroadcastMessage()
+{
+    static Handle gf;
+    if(!gf)
+        gf = CreateGlobalForward("ccl_proc_OnUsernameChangedMsg", ET_Hook);
+    
+    Action aDo = Plugin_Continue;
+    Call_StartForward(gf);
+    Call_Finish(aDo);
+
+    return aDo;
+}

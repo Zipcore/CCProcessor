@@ -69,7 +69,7 @@ public Action cmd_ccl_server(int iClient, int iArgs)
 
 public Action cmd_ccl_say(int iClient, int iArgs)
 {
-    PrintToChatAll("Lol");
+    PrintToChatAll("test");
     return Plugin_Handled;
 }
 
