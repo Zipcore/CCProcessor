@@ -1,4 +1,4 @@
-CCProcessor [![Build Status](https://travis-ci.org/Nullent/CCLProcessor.svg?branch=dev)](https://discord.gg/ChTyPUG)
+CCProcessor [![Build Status](https://travis-ci.org/Nullent/CCProcessor.svg?branch=dev)](https://discord.gg/ChTyPUG)
 ============
 **CCProcessor** - расширенный цветовой процессор игрового чата.
 
