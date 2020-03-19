@@ -69,7 +69,7 @@ public Action cmd_ccl_server(int iClient, int iArgs)
 
 public Action cmd_ccl_say(int iClient, int iArgs)
 {
-    PrintToChatAll("Lol");
+    PrintToChatAll("test");
     return Plugin_Handled;
 }
 
@@ -86,10 +86,12 @@ public void ccl_proc_RebuildString(int iClient, const char[] szBind, char[] szBu
     }
 }
 
-public void ccl_proc_OnServerMsg(char[] szMessage, int MsgLen)
+public bool ccl_proc_OnServerMsg(char[] szMessage, int MsgLen)
 {
     if(IsEnabled_Server)
     {
         Format(szMessage, MsgLen, "%s%s", GREEN, szMessage);
     }
+
+    return true;
 }
