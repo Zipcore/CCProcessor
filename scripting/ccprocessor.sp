@@ -2,7 +2,7 @@
 
 #define PlugName "CCProcessor"
 #define PlugDesc "Extended color chat processor"
-#define PlugVer "1.0.7 Beta"
+#define PlugVer "1.0.8 Beta"
 
 #include std
 
@@ -349,6 +349,16 @@ void GetMessageByPrototype(int iIndex, int iTeam, bool IsAlive, bool ToAll, char
         ReplaceString(szBuffer, iSize, "{TEAM}", Other, true);
     }
 
+    if(StrContains(szBuffer, "{PREFIX}") != -1)
+    {
+        Other = "";
+        clProc_RebuildString(iIndex, "{PREFIX}", SZ(Other));
+        if(strlen(Other) > 63)
+            Other[64] = 0;
+        
+        ReplaceString(szBuffer, iSize, "{PREFIX}", Other, true);
+    }
+
     if(StrContains(szBuffer, "{NAME}") != -1)
     {
         clProc_RebuildString(iIndex, "{NAME}", szName, NameSize);
@@ -378,7 +388,7 @@ public int Native_ClearAllColors(Handle hPlugin, int iArgs)
 
 public int Native_DropTriggers(Handle hPlugins, int iArgs)
 {
-    return view_as<int>(GetNativeCell(1) == 0 ? aTriggers.Clone() : aPhrases.Clone());
+    return view_as<int>(GetNativeCell(1) == 1 ? aTriggers.Clone() : aPhrases.Clone());
 }
 
 void clPoc_ParseEnded()
