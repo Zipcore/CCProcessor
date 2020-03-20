@@ -30,7 +30,7 @@ static const char szFeatures[][] = {"vip_ccp_name", "vip_ccp_msg", "vip_ccp_pref
 #define CPRECOLOR   3
 
 ArrayList aBuffer;
-Cookie coFeatures[4];
+Handle coFeatures[4];
 
 bool blate;
 
@@ -53,7 +53,7 @@ public void OnPluginStart()
         VIP_OnVIPLoaded(); 
 
     for(int i; i < sizeof(szFeatures); i++)
-        coFeatures[i] = new Cookie(szFeatures[i], szFeatures[i], CookieAccess_Private);
+        coFeatures[i] = RegClientCookie(szFeatures[i], szFeatures[i], CookieAccess_Private);
 }
 
 #define _CONFIG_PATH "data\\vip\\modules\\chat.ini"
@@ -77,20 +77,6 @@ public void OnMapStart()
     if(smParser.ParseFile(path, iLine) != SMCError_Okay)
         LogError("Error On parse: %s | Line: %d", path, iLine);
 }
-
-/*
-    Struct:
-    Global -> 0
-        Feature -> 1
-            Groups -> 2
-                Key:Values
-*/
-
-/*
-        Array > Feature:Array
-            Array > Group:Array
-                Array > Strings
-    */
 
 int Section;
 
@@ -124,10 +110,10 @@ SMCResult OnSection(SMCParser smc, const char[] name, bool opt_quotes)
 
     else
     {
-        Section = 2;
-
         aFeature.PushString(name);
         aGroups.Clear();
+
+        Section = 2;
     }
 
     return SMCParse_Continue;
@@ -271,7 +257,7 @@ public void VIP_OnVIPClientLoaded(int iClient)
 
     for(int i; i < sizeof(szFeatures); i++)
     {
-        coFeatures[i].Get(iClient, SZ(szBuffer));
+        GetClientCookie(iClient, coFeatures[i], SZ(szBuffer));
         if(!szBuffer[0])
             continue;
         
@@ -419,12 +405,12 @@ void UpdateValueByFeature(int iClient, const char[] szFeature, const char[] szVa
         if(!ccl_Prefix[iClient][0])
         {
             ccl_Prefix_color[iClient][0] = 0;
-            coFeatures[CPRECOLOR].Set(iClient, NULL_STRING);
+
+            SetClientCookie(iClient, coFeatures[CPRECOLOR], NULL_STRING);
         }
     }
-    
 
-    coFeatures[GetFeaturePos(szFeature)].Set(iClient, szValue);
+    SetClientCookie(iClient, coFeatures[GetFeaturePos(szFeature)], szValue);
 
     PrintToChat(iClient, "%t", "ccl_vip_valueupdated");
 
