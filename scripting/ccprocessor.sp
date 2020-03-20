@@ -204,7 +204,7 @@ public Action MsgText_CB(UserMsg msg_id, Handle msg, const int[] players, int pl
      **
      **/
 
-    char szName[MNL];
+    char szName[128];
     char szMessage[PMP];
     int iIndex;
 
@@ -313,7 +313,7 @@ void clProc_ClearColors(char[] szBuffer, int iLen)
 
 void GetMessageByPrototype(int iIndex, int iTeam, bool IsAlive, bool ToAll, char[] szName, int NameSize, char[] szMesage, int MsgSize, char[] szBuffer, int iSize)
 {
-    static char Other[MNL];
+    static char Other[128];
 
     SetGlobalTransTarget(iIndex);
 
