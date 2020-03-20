@@ -16,8 +16,8 @@ public void OnPluginStart()
 
 public Action Cmd_ccl(int iClient, int iArgs)
 {
-    PrintToChatAll("%sHello, i'm %sServer!", GREEN, RED);
-    if(iClient)
+    PrintToChatAll("%sHello, i'm a %sServer!", GREEN, RED);
+    if(iClient && IsClientInGame(iClient))
         PrintToChat(iClient, "%sHello, %s%N", GREEN, RED, iClient);
 
     return Plugin_Handled;
@@ -37,7 +37,7 @@ public bool OnClientConnect(int iClient, char[] rejectmsg, int maxlen)
 
 public Action cmd_ccl_name(int iClient, int iArgs)
 {
-    if(iClient)
+    if(iClient && IsClientInGame(iClient))
     {
         IsEnabled_Name[iClient] = !IsEnabled_Name[iClient];
     
@@ -49,7 +49,7 @@ public Action cmd_ccl_name(int iClient, int iArgs)
 
 public Action cmd_ccl_msg(int iClient, int iArgs)
 {
-    if(iClient)
+    if(iClient && IsClientInGame(iClient))
     {
         IsEnabled_Msg[iClient] = !IsEnabled_Msg[iClient];
     

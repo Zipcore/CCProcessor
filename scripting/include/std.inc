@@ -4,35 +4,25 @@
 #define PlVer(%0) version = %0
 #define PlUrl(%0) url = %0
 
-	#if defined STANDART_INFO
-		#if !defined PlugAuth
-			#define PlugAuth "nullent?" 
-		#endif
+#if !defined PlugName
+	#define PlugName "unknown" 
+#endif
 
-		#if !defined PlugUrl
-			#define PlugUrl "discord.gg/ChTyPUG" 
-		#endif
+#if !defined PlugVer
+	#define PlugVer "1.0" 
+#endif
 
-		#if !defined PlugName
-			#define PlugName "unknown" 
-		#endif
-
-		#if !defined PlugVer
-			#define PlugVer "1.1" 
-		#endif
-
-		#if !defined PlugDesc
-			#define PlugDesc "unknown" 
-		#endif
-	#endif
+#if !defined PlugDesc
+	#define PlugDesc "unknown" 
+#endif
 
 public Plugin myinfo = 
 {
 	PlName(PlugName),
-	PlAuth(PlugAuth),
+	PlAuth("nullent?"),
 	PlDesc(PlugDesc),
 	PlVer(PlugVer),
-	PlUrl(PlugUrl)
+	PlUrl("discord.gg/ChTyPUG")
 };
 
 
@@ -41,8 +31,8 @@ public Plugin myinfo =
 
 #define FORITER(%0,%1,%2) for(int %0 = %1; %0 < %2; %0++)
 #define BUILD(%0,%1) BuildPath(Path_SM, SZ(%0), %1)
-#define HOOKCVAR(%0,%1) %0(FindConVar(%1), NULL_STRING, NULL_STRING)
-#define CVAR_CHANGE(%0) public void %0(ConVar cvar, const char[] szOldVal, const char[] szNewVal)
+#define _CVAR_INIT_CHANGE(%0,%1) %0(FindConVar(%1), NULL_STRING, NULL_STRING)
+#define _CVAR_ON_CHANGE(%0) public void %0(ConVar cvar, const char[] szOldVal, const char[] szNewVal)
 
 #define PMP PLATFORM_MAX_PATH
 #define MPL MAXPLAYERS+1

@@ -2,22 +2,22 @@
 
 #include ccprocessor
 
-#define STANDART_INFO
-
 #define PlugName "[CCL] FakeUsername"
 #define PlugDesc "Ability to set a fake username in chat msgs"
-#define PlugVer "1.0"
+#define PlugVer "1.0a"
 
 #include std
 
 char fakename[MPL][MNL];
 
-int AccessFlag;
+int AccessFlag, ROOT;
 int ClientFlags[MPL];
 
 public void OnPluginStart()
 {
-    RegConsoleCmd("sm_fakename", OnSendCmd);
+    ROOT = ReadFlagString("z");
+
+    RegConsoleCmd("sm_fakename", OnCmdUse);
 
     CreateConVar("ccl_fakename_accessflag", "a", "Access flag or empty, other than the 'z' flag").AddChangeHook(OnAccessChanged);
     AutoExecConfig(true, "ccl_fakename");
@@ -25,10 +25,10 @@ public void OnPluginStart()
 
 public void OnMapStart()
 {
-    HOOKCVAR(OnAccessChanged, "ccl_fakename_accessflag");
+    _CVAR_INIT_CHANGE(OnAccessChanged, "ccl_fakename_accessflag");
 }
 
-CVAR_CHANGE(OnAccessChanged)
+_CVAR_ON_CHANGE(OnAccessChanged)
 {
     if(!cvar)
         return;
@@ -39,9 +39,9 @@ CVAR_CHANGE(OnAccessChanged)
     AccessFlag = (szFlag[0]) ? ReadFlagString(szFlag) : 0;
 }
 
-public Action OnSendCmd(int iClient, int args)
+public Action OnCmdUse(int iClient, int args)
 {
-    if(iClient && IsClientInGame(iClient) && args == 1 && IsValidClient(iClient))
+    if(args == 1 && iClient && IsClientInGame(iClient) && IsValidClient(iClient))
         GetCmdArg(1, fakename[iClient], sizeof(fakename[]));
 
     return Plugin_Handled;
@@ -65,16 +65,7 @@ public void cc_proc_RebuildString(int iClient, const char[] szBind, char[] szBuf
 }
 
 bool IsValidClient(int iClient)
-{
-    if(!ClientFlags[iClient])
-        return false;
-    
-    else if(ClientFlags[iClient] & ReadFlagString("z"))
-        return true;
-
-    else if(!AccessFlag)
-        return false;
-    
-    return (ClientFlags[iClient] & AccessFlag) ? true : false;
+{    
+    return ((ClientFlags[iClient] && (ClientFlags[iClient] & ROOT)) || (AccessFlag && (ClientFlags[iClient] & AccessFlag)));
 }
 

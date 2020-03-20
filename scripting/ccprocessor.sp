@@ -1,7 +1,4 @@
-
 #pragma newdecls required
-
-#define STANDART_INFO
 
 #define PlugName "CCProcessor"
 #define PlugDesc "Extended color chat processor"
@@ -23,7 +20,7 @@ ArrayList aTriggers;
 ArrayList aPhrases;
 
 char szGameFolder[PMP];
-char msgPrototype[2][64];
+char msgPrototype[2][MTL];
 
 ArrayList dClient;
 
@@ -202,7 +199,7 @@ public Action MsgText_CB(UserMsg msg_id, Handle msg, const int[] players, int pl
     /**
      ** param 1: name
      ** param 2: msg
-     ** param 3: pos
+     ** param 3: location
      ** param 4: \n
      **
      **/
