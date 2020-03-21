@@ -2,7 +2,7 @@
 
 #include ccprocessor
 
-#define PlugName "[CCL] FakeUsername"
+#define PlugName "[CCP] FakeUsername"
 #define PlugDesc "Ability to set a fake username in chat msgs"
 #define PlugVer "1.0a"
 
@@ -19,13 +19,13 @@ public void OnPluginStart()
 
     RegConsoleCmd("sm_fakename", OnCmdUse);
 
-    CreateConVar("ccl_fakename_accessflag", "a", "Access flag or empty, other than the 'z' flag").AddChangeHook(OnAccessChanged);
-    AutoExecConfig(true, "ccl_fakename");
+    CreateConVar("ccp_fakename_accessflag", "a", "Access flag or empty, other than the 'z' flag").AddChangeHook(OnAccessChanged);
+    AutoExecConfig(true, "ccp_fakename");
 }
 
 public void OnMapStart()
 {
-    _CVAR_INIT_CHANGE(OnAccessChanged, "ccl_fakename_accessflag");
+    _CVAR_INIT_CHANGE(OnAccessChanged, "ccp_fakename_accessflag");
 }
 
 _CVAR_ON_CHANGE(OnAccessChanged)

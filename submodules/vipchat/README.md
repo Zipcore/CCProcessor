@@ -1,4 +1,5 @@
-CCP VIPChat [![Build Status](https://travis-ci.org/Nullent/CCProcessor.svg?branch=dev)](https://github.com/Nullent/CCProcessor)
+[![Build Status](https://travis-ci.org/Nullent/CCProcessor.svg?branch=dev)](https://github.com/Nullent/CCProcessor)
+CCP VIPChat 
 ============
 **CCP VIPChat** - кастомизация чата для VIP игроков
 

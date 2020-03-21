@@ -30,55 +30,55 @@
         "en"            "Empty"
     }
 
-    "vip_ccp_prefix_title"
+    "vip_prefix_title"
     {
         "ru"            "Выберите себе префикс:"
         "en"            "Choose ur prefix:"
     }
 
-    "vip_ccp_name_title"
+    "vip_name_color_title"
     {
         "ru"            "Выбор цвета ника:"
         "en"            "Choose ur username color:"
     }
 
-    "vip_ccp_msg_title"
+    "vip_message_color_title"
     {
         "ru"            "Выбор цвета сообщения:"
         "en"            "Choose ur message color:"
     }
 
-    "vip_ccp_prefix_color_title"
+    "vip_prefix_color_title"
     {
         "ru"            "Выбор цвета префикса:"
         "en"            "Choose ur prefix color:"
     }
 
-    "VIP_Disable"
+    "disable_this"
     {
         "ru"            "Убрать"
         "en"            "Disable"
     }
 
-    "custom"
+    "custom_value"
     {
         "ru"            "Ввести свой"
         "en"            "Enter custom value"
     }
 
-    "ccl_vip_write"
+    "ccp_custom_value"
     {
         "ru"            "{G}Введите свой вариант:"
         "en"            "{G}Please write ur custom value now:"
     }
 
-    "ccl_vip_valueupdated"
+    "ccp_vip_valueupdated"
     {
         "ru"            "{G}Значение обновлено!"
         "en"            "{G}The value was updated successfully!"
     }
 
-    "ccl_invalid_colorkey"
+    "ccp_invalid_colorkey"
     {
         "ru"            "{R}Ключ цвета не найден, пожалуйства, повторите попытку:"
         "en"            "{R}Invalid color key, pls write again:"

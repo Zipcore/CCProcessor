@@ -1,24 +1,24 @@
 "Phrases"
 {
-	"vip_ccp_name"
+	"vip_name_color"
 	{
 		"ru"		"Цвет никнейма"
 		"en"		"Client username color"
 	}
 
-	"vip_ccp_msg"
+	"vip_message_color"
 	{
 		"ru"		"Цвет сообщения"
 		"en"		"Client message color"
 	}
 
-	"vip_ccp_prefix"
+	"vip_prefix"
 	{
 		"ru"		"Префикс"
 		"en"		"Client prefix"
 	}
 
-	"vip_ccp_prefix_color"
+	"vip_prefix_color"
 	{
 		"ru"		"Цвет префикса"
 		"en"		"Client prefix color"
