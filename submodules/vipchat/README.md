@@ -7,7 +7,7 @@ CCP VIPChat
 ---------
 - CS:GO
 - CS:S OB
-- TF2?
+- TF2
 - L4D2?
 
 Требования:
