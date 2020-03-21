@@ -195,7 +195,7 @@ public bool OnSelected_Feature(int iClient, const char[] szFeature)
 
 public int OnFeatureDraw(int iClient, const char[] szFeature, int iStyle)
 {
-    if(!strcmp(szFeature, szFeatures[E_Prefix]) && !EnvColor[E_CPrefix][0])
+    if(!strcmp(szFeature, szFeatures[E_Prefix]) && !EnvColor[iClient][E_CPrefix][0])
         return ITEMDRAW_DISABLED;
 
     return iStyle;
