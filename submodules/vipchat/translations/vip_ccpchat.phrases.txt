@@ -1,0 +1,87 @@
+"Phrases"
+{
+    "Prefix_lol"
+    {
+        "ru"            "[LOL]"
+        "en"            "[LOL]"
+    }
+
+    "Prefix_kek"
+    {
+        "ru"            "[KEK]"
+        "en"            "[KEK]"
+    }
+
+    "Prefix_cheburek"
+    {
+        "ru"            "[CHEBUREK]"
+        "en"            "[CHEBUREK]"
+    }
+
+    "Prefix_alpha"
+    {
+        "ru"            "[ALPHA]"
+        "en"            "[ALPHA]"
+    }
+
+    "empty_value"
+    {
+        "ru"            "Пусто"
+        "en"            "Empty"
+    }
+
+    "vip_prefix_title"
+    {
+        "ru"            "Выберите себе префикс:"
+        "en"            "Choose ur prefix:"
+    }
+
+    "vip_name_color_title"
+    {
+        "ru"            "Выбор цвета ника:"
+        "en"            "Choose ur username color:"
+    }
+
+    "vip_message_color_title"
+    {
+        "ru"            "Выбор цвета сообщения:"
+        "en"            "Choose ur message color:"
+    }
+
+    "vip_prefix_color_title"
+    {
+        "ru"            "Выбор цвета префикса:"
+        "en"            "Choose ur prefix color:"
+    }
+
+    "disable_this"
+    {
+        "ru"            "Убрать"
+        "en"            "Disable"
+    }
+
+    "custom_value"
+    {
+        "ru"            "Ввести свой"
+        "en"            "Enter custom value"
+    }
+
+    "ccp_custom_value"
+    {
+        "ru"            "{G}Введите свой вариант:"
+        "en"            "{G}Please write ur custom value now:"
+    }
+
+    "ccp_vip_valueupdated"
+    {
+        "ru"            "{G}Значение обновлено!"
+        "en"            "{G}The value was updated successfully!"
+    }
+
+    "ccp_invalid_colorkey"
+    {
+        "ru"            "{R}Ключ цвета не найден, пожалуйства, повторите попытку:"
+        "en"            "{R}Invalid color key, pls write again:"
+    }
+
+}

@@ -1,0 +1,20 @@
+Plugin(source='scripting/ccprocessor.sp')
+Plugin(source='submodules/test/ccp_test.sp', deps=['ccprocessor'])
+Plugin(source='submodules/fakename/ccp_fakename.sp', deps=['ccprocessor'])
+Plugin(source='submodules/vipchat/scripting/ccp_vipchat.sp', deps=['ccprocessor'])
+
+Package(name='ccproc-base',
+        plugins=['ccprocessor'],
+)
+
+Package(name='ccproc-all',
+        plugins=['ccprocessor', 'ccp_test', 'ccp_fakename', 'ccp_vipchat'],
+)
+
+Package(name='ccproc-release',
+        extends=['ccproc-all'],
+        disabled_plugins=['ccp_test', 'ccp_fakename', 'ccp_vipchat'],
+        filegroups={
+            '.': ['LICENSE' , 'README.md'],
+        },
+)

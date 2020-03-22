@@ -34,5 +34,3 @@
 *.zip
 
 .vscode/*
-scripting/vip_ccl_chat.sp
-scripting/include/vip_core.inc

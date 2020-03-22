@@ -1,11 +1,8 @@
-
 #pragma newdecls required
 
-#define STANDART_INFO
-
-#define PlugName "CCLProcessor"
+#define PlugName "CCProcessor"
 #define PlugDesc "Extended color chat processor"
-#define PlugVer "1.0.7 Beta"
+#define PlugVer "1.0.8 Beta"
 
 #include std
 
@@ -23,7 +20,7 @@ ArrayList aTriggers;
 ArrayList aPhrases;
 
 char szGameFolder[PMP];
-char msgPrototype[2][64];
+char msgPrototype[2][MTL];
 
 ArrayList dClient;
 
@@ -36,10 +33,10 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
     HookUserMessage(GetUserMessageId("TextMsg"), ServerMsg_CB, true);
     HookUserMessage(GetUserMessageId("SayText2"), MsgText_CB, true, SayTextComp);
 
-    CreateNative("ccl_drop_list", Native_DropTriggers);
-    CreateNative("ccl_clear_allcolors", Native_ClearAllColors);
+    CreateNative("cc_drop_list", Native_DropTriggers);
+    CreateNative("cc_clear_allcolors", Native_ClearAllColors);
 
-    RegPluginLibrary("ccl_proc");
+    RegPluginLibrary("ccprocessor");
 
     return APLRes_Success;
 }
@@ -47,7 +44,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 public void OnPluginStart()
 {
     GetGameFolderName(SZ(szGameFolder));
-    LoadTranslations("cclproc.phrases");
+    LoadTranslations("ccproc.phrases");
 
     aTriggers = new ArrayList(64, 0);
     aPhrases = new ArrayList(64, 0);
@@ -202,12 +199,12 @@ public Action MsgText_CB(UserMsg msg_id, Handle msg, const int[] players, int pl
     /**
      ** param 1: name
      ** param 2: msg
-     ** param 3: pos
+     ** param 3: location
      ** param 4: \n
      **
      **/
 
-    char szName[MNL];
+    char szName[128];
     char szMessage[PMP];
     int iIndex;
 
@@ -316,7 +313,7 @@ void clProc_ClearColors(char[] szBuffer, int iLen)
 
 void GetMessageByPrototype(int iIndex, int iTeam, bool IsAlive, bool ToAll, char[] szName, int NameSize, char[] szMesage, int MsgSize, char[] szBuffer, int iSize)
 {
-    static char Other[MNL];
+    static char Other[128];
 
     SetGlobalTransTarget(iIndex);
 
@@ -352,6 +349,16 @@ void GetMessageByPrototype(int iIndex, int iTeam, bool IsAlive, bool ToAll, char
         ReplaceString(szBuffer, iSize, "{TEAM}", Other, true);
     }
 
+    if(StrContains(szBuffer, "{PREFIX}") != -1)
+    {
+        Other = "";
+        clProc_RebuildString(iIndex, "{PREFIX}", SZ(Other));
+        if(strlen(Other) > 63)
+            Other[64] = 0;
+        
+        ReplaceString(szBuffer, iSize, "{PREFIX}", Other, true);
+    }
+
     if(StrContains(szBuffer, "{NAME}") != -1)
     {
         clProc_RebuildString(iIndex, "{NAME}", szName, NameSize);
@@ -381,14 +388,14 @@ public int Native_ClearAllColors(Handle hPlugin, int iArgs)
 
 public int Native_DropTriggers(Handle hPlugins, int iArgs)
 {
-    return view_as<int>(GetNativeCell(1) == 0 ? aTriggers.Clone() : aPhrases.Clone());
+    return view_as<int>(GetNativeCell(1) == 1 ? aTriggers.Clone() : aPhrases.Clone());
 }
 
 void clPoc_ParseEnded()
 {
     static Handle gf;
     if(!gf)
-        gf = CreateGlobalForward("ccl_config_parsed", ET_Ignore);
+        gf = CreateGlobalForward("cc_config_parsed", ET_Ignore);
     
     Call_StartForward(gf);
     Call_Finish();
@@ -398,7 +405,7 @@ void clProc_RebuildString(int iClient, const char[] szBind, char[] szMessage, in
 {
     static Handle gf;
     if(!gf)
-        gf = CreateGlobalForward("ccl_proc_RebuildString", ET_Ignore, Param_Cell, Param_String, Param_String, Param_Cell);
+        gf = CreateGlobalForward("cc_proc_RebuildString", ET_Ignore, Param_Cell, Param_String, Param_String, Param_Cell);
     
     Call_StartForward(gf);
     Call_PushCell(iClient);
@@ -412,7 +419,7 @@ bool clProc_ServerMsg(char[] szMessage, int iSize)
 {
     static Handle gf;
     if(!gf)
-        gf = CreateGlobalForward("ccl_proc_OnServerMsg", ET_Hook, Param_String, Param_Cell);
+        gf = CreateGlobalForward("cc_proc_OnServerMsg", ET_Hook, Param_String, Param_Cell);
     
     bool Send = true;
     Call_StartForward(gf);
@@ -427,7 +434,7 @@ bool clProc_SkipColors(int iClient)
 {
     static Handle gf;
     if(!gf)
-        gf = CreateGlobalForward("ccl_proc_SkipColorsInMsg", ET_Hook, Param_Cell);
+        gf = CreateGlobalForward("cc_proc_SkipColorsInMsg", ET_Hook, Param_Cell);
     
     bool skip = false;
     Call_StartForward(gf);
@@ -441,7 +448,7 @@ Action clProc_BroadcastMessage()
 {
     static Handle gf;
     if(!gf)
-        gf = CreateGlobalForward("ccl_proc_OnUsernameChangedMsg", ET_Hook);
+        gf = CreateGlobalForward("cc_proc_OnUsernameChangedMsg", ET_Hook);
     
     Action aDo = Plugin_Continue;
     Call_StartForward(gf);
