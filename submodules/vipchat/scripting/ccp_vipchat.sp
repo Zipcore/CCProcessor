@@ -31,7 +31,7 @@ enum
 };
 
 char EnvColor[MPL][3][10];
-char ClientPrefix[MPL][64];
+char ClientPrefix[MPL][128];
 
 char ccl_current_feature[MPL][18];
 
@@ -59,7 +59,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 public void OnPluginStart()
 {
-    aBuffer = new ArrayList(64, 0);
+    aBuffer = new ArrayList(128, 0);
 
     LoadTranslations("ccproc.phrases");
     LoadTranslations("vip_ccpchat.phrases");
@@ -102,7 +102,7 @@ SMCResult OnSection(SMCParser smc, const char[] name, bool opt_quotes)
         Section = 0;
 
         aFeature = new ArrayList(128, 0);
-        aGroups = new ArrayList(64, 0);
+        aGroups = new ArrayList(128, 0);
     }
         
     else if(!strcmp(name, szFeatures[E_CPrefix]) || !strcmp(name, szFeatures[E_CName]) || !strcmp(name, szFeatures[E_CMessage]) || !strcmp(name, szFeatures[E_Prefix]))
@@ -346,7 +346,7 @@ public int FeatureMenu_CallBack(Menu hMenu, MenuAction action, int iClient, int 
         case MenuAction_End: delete hMenu;
         case MenuAction_Select:
         {
-            char szOpt2[64];
+            char szOpt2[128];
             hMenu.GetItem(iOpt2, SZ(szOpt2));
 
             if(!strcmp(szOpt2, "custom"))
@@ -415,7 +415,7 @@ public Action OnClientSayCommand(int iClient, const char[] command, const char[]
 
     if(bCustom[iClient])
     {
-        char szBuffer[64];
+        char szBuffer[128];
 
         if(!StrEqual(ccl_current_feature[iClient], szFeatures[E_Prefix]))
         {
@@ -432,7 +432,9 @@ public Action OnClientSayCommand(int iClient, const char[] command, const char[]
         else 
         {
             strcopy(SZ(szBuffer), args);
-            cc_clear_allcolors(SZ(szBuffer));
+
+            if(!ColoredPrefix[iClient])
+                cc_clear_allcolors(SZ(szBuffer));
         }
         
         bCustom[iClient] = false;
