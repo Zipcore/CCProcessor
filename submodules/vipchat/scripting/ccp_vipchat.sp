@@ -6,7 +6,7 @@
 
 #define PlugName "[CCP] VIP Chat"
 #define PlugDesc "Chat features for VIP by user R1KO"
-#define PlugVer "1.1"
+#define PlugVer "1.2"
 
 #include std
 
@@ -43,6 +43,8 @@ Handle coFeatures[4];
 bool blate;
 
 int Section;
+
+bool ColoredPrefix[MPL];
 
 ArrayList aGroups;
 ArrayList aFeature;
@@ -175,7 +177,7 @@ public void cc_config_parsed()
 public void VIP_OnVIPLoaded()
 {
     for(int i; i < sizeof(szFeatures); i++)
-        VIP_RegisterFeature(szFeatures[i], VIP_NULL, SELECTABLE, OnSelected_Feature, OnDisplay_Feature, OnFeatureDraw);
+        VIP_RegisterFeature(szFeatures[i], INT, SELECTABLE, OnSelected_Feature, OnDisplay_Feature, OnFeatureDraw);
 }
 
 public void OnPluginEnd()
@@ -240,6 +242,7 @@ public void OnClientPutInServer(int iClient)
         EnvColor[iClient][i][0] = 0;
     
     ClientPrefix[iClient][0] = 0;
+    ColoredPrefix[iClient] = false;
 }
 
 public void VIP_OnVIPClientLoaded(int iClient)
@@ -249,7 +252,18 @@ public void VIP_OnVIPClientLoaded(int iClient)
             GetClientCookie(iClient, coFeatures[i], EnvColor[iClient][i], sizeof(EnvColor[][]));
     
     if(VIP_IsClientFeatureUse(iClient, szFeatures[E_Prefix]))
+    {
+        ColoredPrefix[iClient] = VIP_GetClientFeatureInt(iClient, szFeatures[E_Prefix]) == 2;
         GetClientCookie(iClient, coFeatures[E_Prefix], ClientPrefix[iClient], sizeof(ClientPrefix[]));
+    }
+
+    if(ColoredPrefix[iClient])
+    {
+        if(VIP_IsClientFeatureUse(iClient, szFeatures[E_CPrefix]))
+            VIP_RemoveClientFeature(iClient, szFeatures[E_CPrefix]);
+        
+        EnvColor[iClient][E_CPrefix][0] = 0;
+    }  
 }
 
 Menu FeatureMenu(int iClient, const char[] szFeature)
@@ -366,9 +380,14 @@ public int FeatureMenu_CallBack(Menu hMenu, MenuAction action, int iClient, int 
 
 void UpdateValueByFeature(int iClient, const char[] szFeature, const char[] szValue)
 {
-    if(!StrEqual(szFeature, szFeatures[E_Prefix]))
+    if(StrEqual(szFeature, szFeatures[E_Prefix]))
+    {
         strcopy(ClientPrefix[iClient], sizeof(ClientPrefix[]), szValue);
 
+        if(!ColoredPrefix[iClient])
+            cc_clear_allcolors(ClientPrefix[iClient], sizeof(ClientPrefix[]));
+    }
+        
     else strcopy(EnvColor[iClient][GetFeaturePos(szFeature)], sizeof(EnvColor[][]), szValue);
 
 
