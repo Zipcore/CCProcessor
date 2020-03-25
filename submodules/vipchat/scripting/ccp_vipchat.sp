@@ -6,7 +6,7 @@
 
 #define PlugName "[CCP] VIP Chat"
 #define PlugDesc "Chat features for VIP by user R1KO"
-#define PlugVer "1.2"
+#define PlugVer "1.2a"
 
 #include std
 
@@ -65,8 +65,8 @@ public void OnPluginStart()
     LoadTranslations("vip_ccpchat.phrases");
     LoadTranslations("vip_modules.phrases");
 
-    aTriggers = new ArrayList(0);
-    aPhrases = new ArrayList(0);
+    aTriggers = new ArrayList(1);
+    aPhrases = new ArrayList(1);
 
     if(VIP_IsVIPLoaded())
         VIP_OnVIPLoaded(); 
@@ -197,7 +197,7 @@ public bool OnSelected_Feature(int iClient, const char[] szFeature)
 
 public int OnFeatureDraw(int iClient, const char[] szFeature, int iStyle)
 {
-    if(!strcmp(szFeature, szFeatures[E_Prefix]) && !EnvColor[iClient][E_CPrefix][0])
+    if(!strcmp(szFeature, szFeatures[E_CPrefix]) && (!ClientPrefix[iClient][0] || ColoredPrefix[iClient]))
         return ITEMDRAW_DISABLED;
 
     return iStyle;
@@ -259,8 +259,8 @@ public void VIP_OnVIPClientLoaded(int iClient)
 
     if(ColoredPrefix[iClient])
     {
-        if(VIP_IsClientFeatureUse(iClient, szFeatures[E_CPrefix]))
-            VIP_RemoveClientFeature(iClient, szFeatures[E_CPrefix]);
+        /*if(VIP_IsClientFeatureUse(iClient, szFeatures[E_CPrefix]))
+            VIP_RemoveClientFeature(iClient, szFeatures[E_CPrefix]);*/
         
         EnvColor[iClient][E_CPrefix][0] = 0;
     }  
@@ -335,8 +335,6 @@ Menu FeatureMenu(int iClient, const char[] szFeature)
             
         hMenu.AddItem(szOpt, szBuffer);
     }
-
-    delete arr;
 
     return hMenu;    
 }
