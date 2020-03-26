@@ -2,7 +2,7 @@
 
 #define PlugName "CCProcessor"
 #define PlugDesc "Extended color chat processor"
-#define PlugVer "1.0.8 Beta"
+#define PlugVer "1.0.9 Beta"
 
 #include std
 
@@ -196,20 +196,13 @@ public void OnFrRequest(any data)
 
 public Action MsgText_CB(UserMsg msg_id, Handle msg, const int[] players, int playersNum, bool reliable, bool init)
 {
-    /**
-     ** param 1: name
-     ** param 2: msg
-     ** param 3: location
-     ** param 4: \n
-     **
-     **/
+    static char szName[128], szMessage[384], szBuffer[640];
+    static int iIndex;
+    static bool ToAll;
 
-    char szName[128];
-    char szMessage[PMP];
-    int iIndex;
-
-    char szBuffer[448];
-    bool ToAll;
+    szName = "";
+    szMessage = "";
+    szBuffer = "";
 
     iIndex = (!umType) ? BfReadByte(msg) : PbReadInt(msg, "ent_idx");
     if(iIndex < 1 || !IsClientInGame(iIndex) || IsClientSourceTV(iIndex))
@@ -311,7 +304,7 @@ void clProc_ClearColors(char[] szBuffer, int iLen)
     }
 }
 
-void GetMessageByPrototype(int iIndex, int iTeam, bool IsAlive, bool ToAll, char[] szName, int NameSize, char[] szMesage, int MsgSize, char[] szBuffer, int iSize)
+void GetMessageByPrototype(int iIndex, int iTeam, bool IsAlive, bool ToAll, char[] szName, int NameSize, char[] szMessage, int MsgSize, char[] szBuffer, int iSize)
 {
     static char Other[128];
 
@@ -352,10 +345,7 @@ void GetMessageByPrototype(int iIndex, int iTeam, bool IsAlive, bool ToAll, char
     if(StrContains(szBuffer, "{PREFIX}") != -1)
     {
         Other = "";
-        clProc_RebuildString(iIndex, "{PREFIX}", SZ(Other));
-        if(strlen(Other) > 63)
-            Other[64] = 0;
-        
+        clProc_RebuildString(iIndex, "{PREFIX}", SZ(Other));        
         ReplaceString(szBuffer, iSize, "{PREFIX}", Other, true);
     }
 
@@ -367,11 +357,11 @@ void GetMessageByPrototype(int iIndex, int iTeam, bool IsAlive, bool ToAll, char
         
     if(StrContains(szBuffer, "{MSG}") != -1)
     {
-        clProc_RebuildString(iIndex, "{MSG}", szMesage, MsgSize);
-        TrimString(szMesage);
+        clProc_RebuildString(iIndex, "{MSG}", szMessage, MsgSize);
+        TrimString(szMessage);
 
-        if(szMesage[0])
-            ReplaceString(szBuffer, iSize, "{MSG}", szMesage, true);
+        if(szMessage[0])
+            ReplaceString(szBuffer, iSize, "{MSG}", szMessage, true);
     }
         
 }
