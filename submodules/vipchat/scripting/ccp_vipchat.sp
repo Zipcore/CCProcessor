@@ -30,9 +30,7 @@ enum
     E_Prefix
 };
 
-#define P_LEVEL_PREFIX  2
-#define P_LEVEL_NAME    2
-#define P_LEVEL_MESSAGE 2
+int nLevel[3];
 
 char EnvColor[MPL][3][10];
 char ClientPrefix[MPL][128];
@@ -55,6 +53,8 @@ ArrayList aFeature;
 
 static const char szFeatures[][] = {"vip_prefix_color", "vip_name_color", "vip_message_color", "vip_prefix"};
 
+static const char szCVars[][] = {"vip_prefix_pririty", "vip_name_priority", "vip_message_priority"};
+
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
     blate = late;
@@ -63,14 +63,19 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 public void OnPluginStart()
 {
-    aBuffer = new ArrayList(128, 0);
-
     LoadTranslations("ccproc.phrases");
     LoadTranslations("vip_ccpchat.phrases");
     LoadTranslations("vip_modules.phrases");
 
+    aBuffer = new ArrayList(128, 0);
     aTriggers = new ArrayList(1);
     aPhrases = new ArrayList(1);
+
+    CreateConVar(szCVars[E_CPrefix], "2", "The priority level to change the color of the prefix", _, true, 0.0).AddChangeHook(OnChangedPPrefix);
+    CreateConVar(szCVars[E_CName], "2", "The priority level to change the color of the username", _, true, 0.0).AddChangeHook(OnChangedPName);
+    CreateConVar(szCVars[E_CMessage], "2", "The priority level to change the color of the usermessage", _, true, 0.0).AddChangeHook(OnChangedPMessage);
+
+    AutoExecConfig(true, "vip_chat", "ccprocessor");
 
     if(VIP_IsVIPLoaded())
         VIP_OnVIPLoaded(); 
@@ -81,6 +86,10 @@ public void OnPluginStart()
 
 public void OnMapStart()
 {
+    _CVAR_INIT_CHANGE(OnChangedPPrefix, szCVars[E_CPrefix]);
+    _CVAR_INIT_CHANGE(OnChangedPName, szCVars[E_CName]);
+    _CVAR_INIT_CHANGE(OnChangedPMessage, szCVars[E_CMessage]);
+
     char path[PMP];
     BUILD(path, _CONFIG_PATH);
     
@@ -97,6 +106,24 @@ public void OnMapStart()
 
     if(smParser.ParseFile(path, iLine) != SMCError_Okay)
         LogError("Error On parse: %s | Line: %d", path, iLine);
+}
+
+_CVAR_ON_CHANGE(OnChangedPPrefix)
+{
+    if(cvar)
+        nLevel[E_CPrefix] = cvar.IntValue;
+}
+
+_CVAR_ON_CHANGE(OnChangedPName)
+{
+    if(cvar)
+        nLevel[E_CName] = cvar.IntValue;
+}
+
+_CVAR_ON_CHANGE(OnChangedPMessage)
+{
+    if(cvar)
+        nLevel[E_CMessage] = cvar.IntValue;
 }
 
 SMCResult OnSection(SMCParser smc, const char[] name, bool opt_quotes)
@@ -455,42 +482,37 @@ public void cc_proc_RebuildString(int iClient, int &plevel, const char[] szBind,
     if(!VIP_IsClientVIP(iClient))
         return;
     
-    if((!strcmp(szBind, "{NAME}") && plevel > P_LEVEL_NAME)
-    || (!strcmp(szBind, "{PREFIX}") && plevel > P_LEVEL_PREFIX) 
-    || (!strcmp(szBind, "{MSG}") && plevel > P_LEVEL_MESSAGE))
+    static int i;
+    i = (!strcmp(szBind, "{NAME}")) ? E_CName : (!strcmp(szBind, "{PREFIX}")) ? E_CPrefix : (!strcmp(szBind, "{MSG}")) ? E_CMessage : -1;
+
+    if(i == -1)
         return;
     
-    if(!strcmp(szBind, "{NAME}"))
+    if(nLevel[i] < plevel)
+        return;
+
+    plevel = nLevel[i];
+    cc_clear_allcolors(szBuffer, iSize);
+
+    switch(i)
     {
-        cc_clear_allcolors(szBuffer, iSize);
-        plevel = P_LEVEL_NAME;
+        case E_CPrefix:
+        {
+            FormatEx(
+                szBuffer, iSize, "%s%s", 
+                (EnvColor[iClient][E_CPrefix][0]) ? EnvColor[iClient][E_CPrefix] : "",
+                (ClientPrefix[iClient][0]) ? ClientPrefix[iClient] : ""
+            );
+        }
 
-        Format(
-            szBuffer, iSize, "%s%s", 
-            (EnvColor[iClient][E_CName][0]) ? EnvColor[iClient][E_CName] : "",
-            szBuffer
-        );
-    }
-
-    else if(!strcmp(szBind, "{MSG}"))
-    {
-        cc_clear_allcolors(szBuffer, iSize);
-        plevel = P_LEVEL_MESSAGE;
-
-        Format(szBuffer, iSize, "%s%s", (EnvColor[iClient][E_CMessage][0]) ? EnvColor[iClient][E_CMessage] : "", szBuffer);
-    }
-        
-
-    else if(!strcmp(szBind, "{PREFIX}"))
-    {
-        cc_clear_allcolors(szBuffer, iSize);
-        plevel = P_LEVEL_PREFIX;
-
-        FormatEx(
-            szBuffer, iSize, "%s%s", 
-            (EnvColor[iClient][E_CPrefix][0]) ? EnvColor[iClient][E_CPrefix] : "",
-            (ClientPrefix[iClient][0]) ? ClientPrefix[iClient] : ""
-        )
+        default:
+        {
+            Format(
+                szBuffer, iSize, "%s%s", 
+                (EnvColor[iClient][i][0]) ? EnvColor[iClient][i] : "",
+                szBuffer
+            );
+        }
     }
 }
 

@@ -2,7 +2,7 @@
 
 #define PlugName "CCProcessor"
 #define PlugDesc "Extended color chat processor"
-#define PlugVer "1.1.0 Beta"
+#define PlugVer "1.1.0"
 
 #include std
 
@@ -43,8 +43,10 @@ public void OnPluginStart()
 
     aTriggers = new ArrayList(64, 0);
     aPhrases = new ArrayList(64, 0);
+    dClient = new ArrayList(640, 0);
 
-    dClient = new ArrayList(512, 0);
+    if(!DirExists("/cfg/ccprocessor"))
+        CreateDirectory("/cfg/ccprocessor", 0x1ED);
 }
 
 public void OnMapStart()
