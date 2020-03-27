@@ -20,7 +20,7 @@ ArrayList aTriggers;
 ArrayList aPhrases;
 
 char szGameFolder[PMP];
-char msgPrototype[2][MTL];
+char msgPrototype[2][128];
 
 ArrayList dClient;
 
@@ -395,7 +395,7 @@ void clProc_RebuildString(int iClient, const char[] szBind, char[] szMessage, in
 {
     static Handle gf;
     if(!gf)
-        gf = CreateGlobalForward("cc_proc_RebuildString", ET_Event, Param_Cell, Param_CellByRef, Param_String, Param_String, Param_Cell);
+        gf = CreateGlobalForward("cc_proc_RebuildString", ET_Ignore, Param_Cell, Param_CellByRef, Param_String, Param_String, Param_Cell);
     
     int plevel;
     Call_StartForward(gf);
