@@ -72,40 +72,46 @@
         "en"                "{G}Green"
     }
 
-    "Color_lime"
+    "Color_pistachio"
     {
-        "ru"                "{L}Лайм"
-        "en"                "{L}Lime"
+        "ru"                "{P}Фисташшковый"
+        "en"                "{P}Pistachio"
     }
 
-    "Color_lightgreen"
+    "Color_lgreen"
     {
         "ru"                "{LG}Светло-зеленый"
         "en"                "{LG}Light green"
     }
 
-    "Color_lightred"
+    "Color_scarlet"
     {
-        "ru"                "{LR}Светло - красный"
-        "en"                "{LR}Light red"
+        "ru"                "{S}Алый"
+        "en"                "{S}Scarlet"
     }
 
-    "Color_gray"
+    "Color_grey"
     {
         "ru"                "{GR}Серый"
-        "en"                "{GR}Gray"
+        "en"                "{GR}Grey"
     }
 
-    "Color_lightolive"
+    "Color_banana"
     {
-        "ru"                "{LO}Светло-оливковый"
-        "en"                "{LO}Light olive"
+        "ru"                "{BA}Банановый"
+        "en"                "{BA}Banana"
     }
 
-    "Color_lightblue"
+    "Color_dgrey"
     {
-        "ru"                "{LB}Светло-синий"
-        "en"                "{LB}Light blue"
+        "ru"                "{DG}Песочно-серый"
+        "en"                "{DG}Dusty-grey"
+    }
+
+    "Color_cyan"
+    {
+        "ru"                "{C}Голубой"
+        "en"                "{C}Cyan"
     }
 
     "Color_blue"
@@ -114,16 +120,22 @@
         "en"                "{B}Blue"
     }
 
-    "Color_purple"
+    "Color_violet"
     {
-        "ru"                "{P}Фиолетовый"
-        "en"                "{P}Purple"
+        "ru"                "{V}Фиалковый"
+        "en"                "{V}Violet"
     }
 
-    "Color_darkred"
+    "Color_pink"
     {
-        "ru"                "{DR}Темно-красный"
-        "en"                "{DR}Dark red"
+        "ru"                "{PI}Розовый"
+        "en"                "{PI}Pink"
+    }
+
+    "Color_coralline"
+    {
+        "ru"                "{CO}Коралловый"
+        "en"                "{CO}Сoralline"
     }
 
     "Color_gold"

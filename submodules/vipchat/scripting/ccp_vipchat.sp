@@ -6,7 +6,7 @@
 
 #define PlugName "[CCP] VIP Chat"
 #define PlugDesc "Chat features for VIP by user R1KO"
-#define PlugVer "1.1"
+#define PlugVer "1.2a"
 
 #include std
 
@@ -30,8 +30,10 @@ enum
     E_Prefix
 };
 
+int nLevel[3];
+
 char EnvColor[MPL][3][10];
-char ClientPrefix[MPL][64];
+char ClientPrefix[MPL][128];
 
 char ccl_current_feature[MPL][18];
 
@@ -44,10 +46,14 @@ bool blate;
 
 int Section;
 
+bool ColoredPrefix[MPL];
+
 ArrayList aGroups;
 ArrayList aFeature;
 
 static const char szFeatures[][] = {"vip_prefix_color", "vip_name_color", "vip_message_color", "vip_prefix"};
+
+static const char szCVars[][] = {"vip_prefix_pririty", "vip_name_priority", "vip_message_priority"};
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
@@ -57,14 +63,19 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 public void OnPluginStart()
 {
-    aBuffer = new ArrayList(64, 0);
-
     LoadTranslations("ccproc.phrases");
     LoadTranslations("vip_ccpchat.phrases");
     LoadTranslations("vip_modules.phrases");
 
-    aTriggers = new ArrayList(0);
-    aPhrases = new ArrayList(0);
+    aBuffer = new ArrayList(128, 0);
+    aTriggers = new ArrayList(1);
+    aPhrases = new ArrayList(1);
+
+    CreateConVar(szCVars[E_CPrefix], "2", "The priority level to change the color of the prefix", _, true, 0.0).AddChangeHook(OnChangedPPrefix);
+    CreateConVar(szCVars[E_CName], "2", "The priority level to change the color of the username", _, true, 0.0).AddChangeHook(OnChangedPName);
+    CreateConVar(szCVars[E_CMessage], "2", "The priority level to change the color of the usermessage", _, true, 0.0).AddChangeHook(OnChangedPMessage);
+
+    AutoExecConfig(true, "vip_chat", "ccprocessor");
 
     if(VIP_IsVIPLoaded())
         VIP_OnVIPLoaded(); 
@@ -75,6 +86,10 @@ public void OnPluginStart()
 
 public void OnMapStart()
 {
+    _CVAR_INIT_CHANGE(OnChangedPPrefix, szCVars[E_CPrefix]);
+    _CVAR_INIT_CHANGE(OnChangedPName, szCVars[E_CName]);
+    _CVAR_INIT_CHANGE(OnChangedPMessage, szCVars[E_CMessage]);
+
     char path[PMP];
     BUILD(path, _CONFIG_PATH);
     
@@ -93,6 +108,24 @@ public void OnMapStart()
         LogError("Error On parse: %s | Line: %d", path, iLine);
 }
 
+_CVAR_ON_CHANGE(OnChangedPPrefix)
+{
+    if(cvar)
+        nLevel[E_CPrefix] = cvar.IntValue;
+}
+
+_CVAR_ON_CHANGE(OnChangedPName)
+{
+    if(cvar)
+        nLevel[E_CName] = cvar.IntValue;
+}
+
+_CVAR_ON_CHANGE(OnChangedPMessage)
+{
+    if(cvar)
+        nLevel[E_CMessage] = cvar.IntValue;
+}
+
 SMCResult OnSection(SMCParser smc, const char[] name, bool opt_quotes)
 {
     if(!strcmp(name, "chat_settings"))
@@ -100,7 +133,7 @@ SMCResult OnSection(SMCParser smc, const char[] name, bool opt_quotes)
         Section = 0;
 
         aFeature = new ArrayList(128, 0);
-        aGroups = new ArrayList(64, 0);
+        aGroups = new ArrayList(128, 0);
     }
         
     else if(!strcmp(name, szFeatures[E_CPrefix]) || !strcmp(name, szFeatures[E_CName]) || !strcmp(name, szFeatures[E_CMessage]) || !strcmp(name, szFeatures[E_Prefix]))
@@ -175,7 +208,7 @@ public void cc_config_parsed()
 public void VIP_OnVIPLoaded()
 {
     for(int i; i < sizeof(szFeatures); i++)
-        VIP_RegisterFeature(szFeatures[i], VIP_NULL, SELECTABLE, OnSelected_Feature, OnDisplay_Feature, OnFeatureDraw);
+        VIP_RegisterFeature(szFeatures[i], INT, SELECTABLE, OnSelected_Feature, OnDisplay_Feature, OnFeatureDraw);
 }
 
 public void OnPluginEnd()
@@ -195,7 +228,7 @@ public bool OnSelected_Feature(int iClient, const char[] szFeature)
 
 public int OnFeatureDraw(int iClient, const char[] szFeature, int iStyle)
 {
-    if(!strcmp(szFeature, szFeatures[E_Prefix]) && !EnvColor[iClient][E_CPrefix][0])
+    if(!strcmp(szFeature, szFeatures[E_CPrefix]) && (!ClientPrefix[iClient][0] || ColoredPrefix[iClient]))
         return ITEMDRAW_DISABLED;
 
     return iStyle;
@@ -240,6 +273,7 @@ public void OnClientPutInServer(int iClient)
         EnvColor[iClient][i][0] = 0;
     
     ClientPrefix[iClient][0] = 0;
+    ColoredPrefix[iClient] = false;
 }
 
 public void VIP_OnVIPClientLoaded(int iClient)
@@ -249,7 +283,18 @@ public void VIP_OnVIPClientLoaded(int iClient)
             GetClientCookie(iClient, coFeatures[i], EnvColor[iClient][i], sizeof(EnvColor[][]));
     
     if(VIP_IsClientFeatureUse(iClient, szFeatures[E_Prefix]))
+    {
+        ColoredPrefix[iClient] = VIP_GetClientFeatureInt(iClient, szFeatures[E_Prefix]) == 2;
         GetClientCookie(iClient, coFeatures[E_Prefix], ClientPrefix[iClient], sizeof(ClientPrefix[]));
+    }
+
+    if(ColoredPrefix[iClient])
+    {
+        /*if(VIP_IsClientFeatureUse(iClient, szFeatures[E_CPrefix]))
+            VIP_RemoveClientFeature(iClient, szFeatures[E_CPrefix]);*/
+        
+        EnvColor[iClient][E_CPrefix][0] = 0;
+    }  
 }
 
 Menu FeatureMenu(int iClient, const char[] szFeature)
@@ -322,8 +367,6 @@ Menu FeatureMenu(int iClient, const char[] szFeature)
         hMenu.AddItem(szOpt, szBuffer);
     }
 
-    delete arr;
-
     return hMenu;    
 }
 
@@ -334,7 +377,7 @@ public int FeatureMenu_CallBack(Menu hMenu, MenuAction action, int iClient, int 
         case MenuAction_End: delete hMenu;
         case MenuAction_Select:
         {
-            char szOpt2[64];
+            char szOpt2[128];
             hMenu.GetItem(iOpt2, SZ(szOpt2));
 
             if(!strcmp(szOpt2, "custom"))
@@ -366,9 +409,14 @@ public int FeatureMenu_CallBack(Menu hMenu, MenuAction action, int iClient, int 
 
 void UpdateValueByFeature(int iClient, const char[] szFeature, const char[] szValue)
 {
-    if(!StrEqual(szFeature, szFeatures[E_Prefix]))
+    if(StrEqual(szFeature, szFeatures[E_Prefix]))
+    {
         strcopy(ClientPrefix[iClient], sizeof(ClientPrefix[]), szValue);
 
+        if(!ColoredPrefix[iClient])
+            cc_clear_allcolors(ClientPrefix[iClient], sizeof(ClientPrefix[]));
+    }
+        
     else strcopy(EnvColor[iClient][GetFeaturePos(szFeature)], sizeof(EnvColor[][]), szValue);
 
 
@@ -398,7 +446,7 @@ public Action OnClientSayCommand(int iClient, const char[] command, const char[]
 
     if(bCustom[iClient])
     {
-        char szBuffer[64];
+        char szBuffer[128];
 
         if(!StrEqual(ccl_current_feature[iClient], szFeatures[E_Prefix]))
         {
@@ -415,7 +463,9 @@ public Action OnClientSayCommand(int iClient, const char[] command, const char[]
         else 
         {
             strcopy(SZ(szBuffer), args);
-            cc_clear_allcolors(SZ(szBuffer));
+
+            if(!ColoredPrefix[iClient])
+                cc_clear_allcolors(SZ(szBuffer));
         }
         
         bCustom[iClient] = false;
@@ -427,30 +477,42 @@ public Action OnClientSayCommand(int iClient, const char[] command, const char[]
     return Plugin_Continue;
 }
 
-public void cc_proc_RebuildString(int iClient, const char[] szBind, char[] szBuffer, int iSize)
+public void cc_proc_RebuildString(int iClient, int &plevel, const char[] szBind, char[] szBuffer, int iSize)
 {
     if(!VIP_IsClientVIP(iClient))
         return;
     
-    if(!strcmp(szBind, "{NAME}"))
-    {
-        Format(
-            szBuffer, iSize, "%s%s", 
-            (EnvColor[iClient][E_CName][0]) ? EnvColor[iClient][E_CName] : "",
-            szBuffer
-        );
-    }
+    static int i;
+    i = (!strcmp(szBind, "{NAME}")) ? E_CName : (!strcmp(szBind, "{PREFIX}")) ? E_CPrefix : (!strcmp(szBind, "{MSG}")) ? E_CMessage : -1;
 
-    else if(!strcmp(szBind, "{MSG}"))
-        Format(szBuffer, iSize, "%s%s", (EnvColor[iClient][E_CMessage][0]) ? EnvColor[iClient][E_CMessage] : "", szBuffer);
+    if(i == -1)
+        return;
+    
+    if(nLevel[i] < plevel)
+        return;
 
-    else if(!strcmp(szBind, "{PREFIX}"))
+    plevel = nLevel[i];
+    cc_clear_allcolors(szBuffer, iSize);
+
+    switch(i)
     {
-        FormatEx(
-            szBuffer, iSize, "%s%s", 
-            (EnvColor[iClient][E_CPrefix][0]) ? EnvColor[iClient][E_CPrefix] : "",
-            (ClientPrefix[iClient][0]) ? ClientPrefix[iClient] : ""
-        )
+        case E_CPrefix:
+        {
+            FormatEx(
+                szBuffer, iSize, "%s%s", 
+                (EnvColor[iClient][E_CPrefix][0]) ? EnvColor[iClient][E_CPrefix] : "",
+                (ClientPrefix[iClient][0]) ? ClientPrefix[iClient] : ""
+            );
+        }
+
+        default:
+        {
+            Format(
+                szBuffer, iSize, "%s%s", 
+                (EnvColor[iClient][i][0]) ? EnvColor[iClient][i] : "",
+                szBuffer
+            );
+        }
     }
 }
 

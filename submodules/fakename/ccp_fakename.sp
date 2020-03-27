@@ -13,6 +13,8 @@ char fakename[MPL][MNL];
 int AccessFlag, ROOT;
 int ClientFlags[MPL];
 
+int nLevel;
+
 public void OnPluginStart()
 {
     ROOT = ReadFlagString("z");
@@ -20,12 +22,15 @@ public void OnPluginStart()
     RegConsoleCmd("sm_fakename", OnCmdUse);
 
     CreateConVar("ccp_fakename_accessflag", "a", "Access flag or empty, other than the 'z' flag").AddChangeHook(OnAccessChanged);
-    AutoExecConfig(true, "ccp_fakename");
+    CreateConVar("ccp_fakename_priority", "9", "The priority level to change the username", _, true, 0.0).AddChangeHook(OnChangePName);
+
+    AutoExecConfig(true, "ccp_fakename", "ccprocessor");
 }
 
 public void OnMapStart()
 {
     _CVAR_INIT_CHANGE(OnAccessChanged, "ccp_fakename_accessflag");
+    _CVAR_INIT_CHANGE(OnChangePName, "ccp_fakename_priority");
 }
 
 _CVAR_ON_CHANGE(OnAccessChanged)
@@ -37,6 +42,12 @@ _CVAR_ON_CHANGE(OnAccessChanged)
     cvar.GetString(SZ(szFlag));
 
     AccessFlag = (szFlag[0]) ? ReadFlagString(szFlag) : 0;
+}
+
+_CVAR_ON_CHANGE(OnChangePName)
+{
+    if(cvar)
+        nLevel = cvar.IntValue;
 }
 
 public Action OnCmdUse(int iClient, int args)
@@ -58,10 +69,13 @@ public void OnClientPostAdminCheck(int iClient)
     ClientFlags[iClient] = GetUserFlagBits(iClient);
 }
 
-public void cc_proc_RebuildString(int iClient, const char[] szBind, char[] szBuffer, int iSize)
+public void cc_proc_RebuildString(int iClient, int &plevel, const char[] szBind, char[] szBuffer, int iSize)
 {
-    if(!strcmp(szBind, "{NAME}") && fakename[iClient][0])
+    if(!strcmp(szBind, "{NAME}") && fakename[iClient][0] && plevel < nLevel)
+    {
+        plevel = nLevel;
         FormatEx(szBuffer, iSize, fakename[iClient]);
+    }  
 }
 
 bool IsValidClient(int iClient)

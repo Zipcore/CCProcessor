@@ -14,7 +14,7 @@ forward bool cc_proc_SkipColorsInMsg(int iClient);
 	Prototype properties of the client message
 	const char[] szBind = {TEAM}, {NAME}, {MSG}, {STATUS}
 */
-forward void cc_proc_RebuildString(int iClient, const char[] szBind, char[] szBuffer, int iSize);
+forward void cc_proc_RebuildString(int iClient, int &pLevel, const char[] szBind, char[] szBuffer, int iSize);
 
 /* Message sended by server */
 forward bool cc_proc_OnServerMsg(char[] szMessage, int MsgLen);

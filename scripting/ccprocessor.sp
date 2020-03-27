@@ -2,15 +2,12 @@
 
 #define PlugName "CCProcessor"
 #define PlugDesc "Extended color chat processor"
-#define PlugVer "1.0.8 Beta"
+#define PlugVer "1.1.0"
 
 #include std
 
 #define SETTINGS_PATH "configs/c_var/%s.ini"
 
-//EngineVersion eEngine;
-
-/* CSGO: Proto - SayText2, CSS OB: BF - SayText2 */
 UserMessageType umType;
 
 /* Key:Color */
@@ -20,14 +17,12 @@ ArrayList aTriggers;
 ArrayList aPhrases;
 
 char szGameFolder[PMP];
-char msgPrototype[2][MTL];
+char msgPrototype[2][128];
 
 ArrayList dClient;
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {    
-    //eEngine = GetEngineVersion();
-
     umType = GetUserMessageType();
 
     HookUserMessage(GetUserMessageId("TextMsg"), ServerMsg_CB, true);
@@ -48,8 +43,10 @@ public void OnPluginStart()
 
     aTriggers = new ArrayList(64, 0);
     aPhrases = new ArrayList(64, 0);
+    dClient = new ArrayList(640, 0);
 
-    dClient = new ArrayList(512, 0);
+    if(!DirExists("/cfg/ccprocessor"))
+        CreateDirectory("/cfg/ccprocessor", 0x1ED);
 }
 
 public void OnMapStart()
@@ -196,20 +193,13 @@ public void OnFrRequest(any data)
 
 public Action MsgText_CB(UserMsg msg_id, Handle msg, const int[] players, int playersNum, bool reliable, bool init)
 {
-    /**
-     ** param 1: name
-     ** param 2: msg
-     ** param 3: location
-     ** param 4: \n
-     **
-     **/
+    static char szName[128], szMessage[384], szBuffer[640];
+    static int iIndex;
+    static bool ToAll;
 
-    char szName[128];
-    char szMessage[PMP];
-    int iIndex;
-
-    char szBuffer[448];
-    bool ToAll;
+    szName = "";
+    szMessage = "";
+    szBuffer = "";
 
     iIndex = (!umType) ? BfReadByte(msg) : PbReadInt(msg, "ent_idx");
     if(iIndex < 1 || !IsClientInGame(iIndex) || IsClientSourceTV(iIndex))
@@ -311,7 +301,7 @@ void clProc_ClearColors(char[] szBuffer, int iLen)
     }
 }
 
-void GetMessageByPrototype(int iIndex, int iTeam, bool IsAlive, bool ToAll, char[] szName, int NameSize, char[] szMesage, int MsgSize, char[] szBuffer, int iSize)
+void GetMessageByPrototype(int iIndex, int iTeam, bool IsAlive, bool ToAll, char[] szName, int NameSize, char[] szMessage, int MsgSize, char[] szBuffer, int iSize)
 {
     static char Other[128];
 
@@ -328,7 +318,7 @@ void GetMessageByPrototype(int iIndex, int iTeam, bool IsAlive, bool ToAll, char
         if(iIndex)
             FormatEx(SZ(Other), "%t", (IsAlive) ? "ClientStatus_Alive" : "ClientStatus_Died");
         
-        clProc_RebuildString(iIndex, "{STATUS}", SZ(Other));        
+        clProc_RebuildString(iIndex, "{STATUS}", SZ(Other));
         ReplaceString(szBuffer, iSize, "{STATUS}", Other, true);
     }
 
@@ -352,10 +342,7 @@ void GetMessageByPrototype(int iIndex, int iTeam, bool IsAlive, bool ToAll, char
     if(StrContains(szBuffer, "{PREFIX}") != -1)
     {
         Other = "";
-        clProc_RebuildString(iIndex, "{PREFIX}", SZ(Other));
-        if(strlen(Other) > 63)
-            Other[64] = 0;
-        
+        clProc_RebuildString(iIndex, "{PREFIX}", SZ(Other));        
         ReplaceString(szBuffer, iSize, "{PREFIX}", Other, true);
     }
 
@@ -367,11 +354,11 @@ void GetMessageByPrototype(int iIndex, int iTeam, bool IsAlive, bool ToAll, char
         
     if(StrContains(szBuffer, "{MSG}") != -1)
     {
-        clProc_RebuildString(iIndex, "{MSG}", szMesage, MsgSize);
-        TrimString(szMesage);
+        clProc_RebuildString(iIndex, "{MSG}", szMessage, MsgSize);
+        TrimString(szMessage);
 
-        if(szMesage[0])
-            ReplaceString(szBuffer, iSize, "{MSG}", szMesage, true);
+        if(szMessage[0])
+            ReplaceString(szBuffer, iSize, "{MSG}", szMessage, true);
     }
         
 }
@@ -405,10 +392,12 @@ void clProc_RebuildString(int iClient, const char[] szBind, char[] szMessage, in
 {
     static Handle gf;
     if(!gf)
-        gf = CreateGlobalForward("cc_proc_RebuildString", ET_Ignore, Param_Cell, Param_String, Param_String, Param_Cell);
+        gf = CreateGlobalForward("cc_proc_RebuildString", ET_Ignore, Param_Cell, Param_CellByRef, Param_String, Param_String, Param_Cell);
     
+    int plevel;
     Call_StartForward(gf);
     Call_PushCell(iClient);
+    Call_PushCellRef(plevel);
     Call_PushString(szBind);
     Call_PushStringEx(szMessage, iSize, SM_PARAM_STRING_UTF8|SM_PARAM_STRING_COPY, SM_PARAM_COPYBACK);
     Call_PushCell(iSize);
