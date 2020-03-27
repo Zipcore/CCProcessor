@@ -20,8 +20,8 @@
 
     "Prefix_alpha"
     {
-        "ru"            "{R}[{G}A{B}L{P}P{LG}H{L}A{DR}]"
-        "en"            "{R}[{G}A{B}L{P}P{LG}H{L}A{DR}]"
+        "ru"            "{R}[{G}A{B}L{P}P{LG}H{BA}A{S}]"
+        "en"            "{R}[{G}A{B}L{P}P{LG}H{BA}A{S}]"
     }
 
     "empty_value"

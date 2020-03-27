@@ -8,9 +8,6 @@
 
 #define SETTINGS_PATH "configs/c_var/%s.ini"
 
-//EngineVersion eEngine;
-
-/* CSGO: Proto - SayText2, CSS OB: BF - SayText2 */
 UserMessageType umType;
 
 /* Key:Color */
@@ -26,8 +23,6 @@ ArrayList dClient;
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {    
-    //eEngine = GetEngineVersion();
-
     umType = GetUserMessageType();
 
     HookUserMessage(GetUserMessageId("TextMsg"), ServerMsg_CB, true);
