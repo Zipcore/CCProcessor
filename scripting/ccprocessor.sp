@@ -2,7 +2,7 @@
 
 #define PlugName "CCProcessor"
 #define PlugDesc "Extended color chat processor"
-#define PlugVer "1.0.9 Beta"
+#define PlugVer "1.1.0 Beta"
 
 #include std
 
@@ -321,7 +321,7 @@ void GetMessageByPrototype(int iIndex, int iTeam, bool IsAlive, bool ToAll, char
         if(iIndex)
             FormatEx(SZ(Other), "%t", (IsAlive) ? "ClientStatus_Alive" : "ClientStatus_Died");
         
-        clProc_RebuildString(iIndex, "{STATUS}", SZ(Other));        
+        clProc_RebuildString(iIndex, "{STATUS}", SZ(Other));
         ReplaceString(szBuffer, iSize, "{STATUS}", Other, true);
     }
 
@@ -395,10 +395,12 @@ void clProc_RebuildString(int iClient, const char[] szBind, char[] szMessage, in
 {
     static Handle gf;
     if(!gf)
-        gf = CreateGlobalForward("cc_proc_RebuildString", ET_Ignore, Param_Cell, Param_String, Param_String, Param_Cell);
+        gf = CreateGlobalForward("cc_proc_RebuildString", ET_Event, Param_Cell, Param_CellByRef, Param_String, Param_String, Param_Cell);
     
+    int plevel;
     Call_StartForward(gf);
     Call_PushCell(iClient);
+    Call_PushCellRef(plevel);
     Call_PushString(szBind);
     Call_PushStringEx(szMessage, iSize, SM_PARAM_STRING_UTF8|SM_PARAM_STRING_COPY, SM_PARAM_COPYBACK);
     Call_PushCell(iSize);

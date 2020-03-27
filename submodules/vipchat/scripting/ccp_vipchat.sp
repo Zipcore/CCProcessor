@@ -30,6 +30,10 @@ enum
     E_Prefix
 };
 
+#define P_LEVEL_PREFIX  2
+#define P_LEVEL_NAME    2
+#define P_LEVEL_MESSAGE 2
+
 char EnvColor[MPL][3][10];
 char ClientPrefix[MPL][128];
 
@@ -446,13 +450,21 @@ public Action OnClientSayCommand(int iClient, const char[] command, const char[]
     return Plugin_Continue;
 }
 
-public void cc_proc_RebuildString(int iClient, const char[] szBind, char[] szBuffer, int iSize)
+public void cc_proc_RebuildString(int iClient, int &plevel, const char[] szBind, char[] szBuffer, int iSize)
 {
     if(!VIP_IsClientVIP(iClient))
         return;
     
+    if((!strcmp(szBind, "{NAME}") && plevel > P_LEVEL_NAME)
+    || (!strcmp(szBind, "{PREFIX}") && plevel > P_LEVEL_PREFIX) 
+    || (!strcmp(szBind, "{MSG}") && plevel > P_LEVEL_MESSAGE))
+        return;
+    
     if(!strcmp(szBind, "{NAME}"))
     {
+        cc_clear_allcolors(szBuffer, iSize);
+        plevel = P_LEVEL_NAME;
+
         Format(
             szBuffer, iSize, "%s%s", 
             (EnvColor[iClient][E_CName][0]) ? EnvColor[iClient][E_CName] : "",
@@ -461,10 +473,19 @@ public void cc_proc_RebuildString(int iClient, const char[] szBind, char[] szBuf
     }
 
     else if(!strcmp(szBind, "{MSG}"))
+    {
+        cc_clear_allcolors(szBuffer, iSize);
+        plevel = P_LEVEL_MESSAGE;
+
         Format(szBuffer, iSize, "%s%s", (EnvColor[iClient][E_CMessage][0]) ? EnvColor[iClient][E_CMessage] : "", szBuffer);
+    }
+        
 
     else if(!strcmp(szBind, "{PREFIX}"))
     {
+        cc_clear_allcolors(szBuffer, iSize);
+        plevel = P_LEVEL_PREFIX;
+
         FormatEx(
             szBuffer, iSize, "%s%s", 
             (EnvColor[iClient][E_CPrefix][0]) ? EnvColor[iClient][E_CPrefix] : "",

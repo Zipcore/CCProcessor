@@ -5,6 +5,9 @@
 #define GREEN   "{G}"
 #define RED     "{R}"
 
+#define P_LEVEL_MSG     1
+#define P_LEVEL_NAME    1
+
 public void OnPluginStart()
 {
     RegConsoleCmd("ccl_test", Cmd_ccl);
@@ -73,15 +76,21 @@ public Action cmd_ccl_say(int iClient, int iArgs)
     return Plugin_Handled;
 }
 
-public void cc_proc_RebuildString(int iClient, const char[] szBind, char[] szBuffer, int iSize)
+public void cc_proc_RebuildString(int iClient, int &plevel, const char[] szBind, char[] szBuffer, int iSize)
 {
-    if(!strcmp(szBind, "{MSG}") && IsEnabled_Msg[iClient])
+    if(!strcmp(szBind, "{MSG}") && IsEnabled_Msg[iClient] && plevel < P_LEVEL_MSG)
     {
+        plevel = P_LEVEL_MSG;
+        cc_clear_allcolors(szBuffer, iSize);
+
         Format(szBuffer, iSize, "%s%s", GREEN, szBuffer);
     }
 
-    if(!strcmp(szBind, "{NAME}") && IsEnabled_Name[iClient])
+    else if(!strcmp(szBind, "{NAME}") && IsEnabled_Name[iClient] && plevel < P_LEVEL_NAME)
     {
+        plevel = P_LEVEL_NAME;
+        cc_clear_allcolors(szBuffer, iSize);
+        
         Format(szBuffer, iSize, "%s%s", RED, szBuffer);
     }
 }

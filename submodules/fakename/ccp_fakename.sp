@@ -58,10 +58,13 @@ public void OnClientPostAdminCheck(int iClient)
     ClientFlags[iClient] = GetUserFlagBits(iClient);
 }
 
-public void cc_proc_RebuildString(int iClient, const char[] szBind, char[] szBuffer, int iSize)
+public void cc_proc_RebuildString(int iClient, int &plevel, const char[] szBind, char[] szBuffer, int iSize)
 {
-    if(!strcmp(szBind, "{NAME}") && fakename[iClient][0])
+    if(!strcmp(szBind, "{NAME}") && fakename[iClient][0] && plevel < 10)
+    {
+        plevel = 10;
         FormatEx(szBuffer, iSize, fakename[iClient]);
+    }  
 }
 
 bool IsValidClient(int iClient)
