@@ -4,7 +4,7 @@
 
 #define PlugName "[CCP] FakeUsername"
 #define PlugDesc "Ability to set a fake username in chat msgs"
-#define PlugVer "1.0a"
+#define PlugVer "1.1"
 
 #include std
 

@@ -6,7 +6,7 @@
 
 #define PlugName "[CCP] VIP Chat"
 #define PlugDesc "Chat features for VIP by user R1KO"
-#define PlugVer "1.2a"
+#define PlugVer "1.3"
 
 #include std
 
@@ -95,6 +95,8 @@ public void OnMapStart()
     
     if(!FileExists(path))
         SetFailState("Where is my config: %s ???", path);
+
+    aBuffer.Clear();
 
     SMCParser smParser = new SMCParser();
     smParser.OnKeyValue = OnValueRead;
