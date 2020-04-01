@@ -6,7 +6,7 @@
 
 #define PlugName "[CCP] VIP Chat"
 #define PlugDesc "Chat features for VIP by user R1KO"
-#define PlugVer "1.3"
+#define PlugVer "1.4"
 
 #include std
 
@@ -107,7 +107,7 @@ public void OnMapStart()
     int iLine;
 
     if(smParser.ParseFile(path, iLine) != SMCError_Okay)
-        LogError("Error On parse: %s | Line: %d", path, iLine);
+        LogError("Error On parse: %s | Line: %i", path, iLine);
 }
 
 _CVAR_ON_CHANGE(OnChangedPPrefix)
@@ -141,7 +141,10 @@ SMCResult OnSection(SMCParser smc, const char[] name, bool opt_quotes)
     else if(!strcmp(name, szFeatures[E_CPrefix]) || !strcmp(name, szFeatures[E_CName]) || !strcmp(name, szFeatures[E_CMessage]) || !strcmp(name, szFeatures[E_Prefix]))
     {
         if(aBuffer.FindString(name) != -1)
-            return SMCParse_HaltFail;
+        {
+            LogError("Duplicate found for feature: %s", name);
+            return SMCParse_Continue;
+        }
         
         aFeature.Clear();
         aBuffer.PushString(name);
@@ -186,7 +189,7 @@ SMCResult OnValueRead(SMCParser smc, const char[] sKey, const char[] sValue, boo
 public void OnParseEnded(SMCParser smc, bool halted, bool failed)
 {
     if(halted || failed)
-        SetFailState("Configuration reading error");
+        SetFailState("Errors detected while reading the config file");
 
     delete aFeature;
     delete aGroups;
@@ -224,7 +227,10 @@ public void OnPluginEnd()
 
 public bool OnSelected_Feature(int iClient, const char[] szFeature)
 {
-    FeatureMenu(iClient, szFeature).Display(iClient, MENU_TIME_FOREVER);
+    Menu hMenu = FeatureMenu(iClient, szFeature);
+    if(hMenu)   
+        hMenu.Display(iClient, MENU_TIME_FOREVER);
+
     return false;
 }
 
@@ -318,18 +324,22 @@ Menu FeatureMenu(int iClient, const char[] szFeature)
             Array > Group:Array
                 Array > Strings
     */
-    iPos[0] = aBuffer.FindString(szFeature);
-    if(iPos[0] == -1)
-        return hMenu;
 
-    iPos[1] = view_as<ArrayList>(aBuffer.Get(iPos[0]+1)).FindString(szGroup);
-    if(iPos[1] == -1)
-        return hMenu;
-    
-    arr = view_as<ArrayList>(aBuffer.Get(iPos[0] + 1)).Get(iPos[1] + 1);
-    if(!arr)
+    if((iPos[0] = aBuffer.FindString(szFeature)) == -1)
     {
-        LogError("Failed on get array");
+        LogError("Could not find feature: %s", szFeature);
+        return hMenu;
+    }
+        
+    if((iPos[1] = view_as<ArrayList>(aBuffer.Get(iPos[0]+1)).FindString(szGroup)) == -1)
+    {
+        LogError("Could not find group: %s", szGroup);
+        return hMenu;
+    }
+        
+    if(!(arr = view_as<ArrayList>(aBuffer.Get(iPos[0] + 1)).Get(iPos[1] + 1)))
+    {
+        LogError("An array of group items is not valid");
         return hMenu;
     }
         
