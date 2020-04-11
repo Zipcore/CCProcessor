@@ -1,12 +1,16 @@
 #pragma newdecls required
 
-#define PlugName "CCProcessor"
-#define PlugDesc "Extended color chat processor"
-#define PlugVer "1.1.0"
-
-#include std
-
 #define SETTINGS_PATH "configs/c_var/%s.ini"
+
+#define STATUS_LENGTH   16
+#define TEAM_LENGTH     24
+#define PREFIX_LENGTH   64
+#define NAME_LENGTH     128
+#define MESSAGE_LENGTH  PLATFORM_MAX_PATH
+
+#define MAX_LENGTH      512
+
+#define SZ(%0) %0, sizeof(%0)
 
 UserMessageType umType;
 
@@ -16,10 +20,19 @@ ArrayList aTriggers;
 /* Key:Translation */
 ArrayList aPhrases;
 
-char szGameFolder[PMP];
-char msgPrototype[2][128];
+char szConfigPath[MESSAGE_LENGTH];
+char msgPrototype[2][MESSAGE_LENGTH];
 
 ArrayList dClient;
+
+public Plugin myinfo = 
+{
+	name = "CCProcessor",
+	author = "nullent?",
+	description = "Color chat processor",
+	version = "1.2.0",
+	url = "discord.gg/ChTyPUG"
+};
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {    
@@ -38,12 +51,16 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 public void OnPluginStart()
 {
-    GetGameFolderName(SZ(szGameFolder));
+    GetGameFolderName(SZ(szConfigPath));
+    Format(SZ(szConfigPath), SETTINGS_PATH, szConfigPath);
+
+    BuildPath(Path_SM, SZ(szConfigPath), szConfigPath);
+
     LoadTranslations("ccproc.phrases");
 
-    aTriggers = new ArrayList(64, 0);
-    aPhrases = new ArrayList(64, 0);
-    dClient = new ArrayList(640, 0);
+    aTriggers = new ArrayList(STATUS_LENGTH, 0);
+    aPhrases = new ArrayList(TEAM_LENGTH, 0);
+    dClient = new ArrayList(MAX_LENGTH, 0);
 
     if(!DirExists("/cfg/ccprocessor"))
         CreateDirectory("/cfg/ccprocessor", 0x1ED);
@@ -51,34 +68,24 @@ public void OnPluginStart()
 
 public void OnMapStart()
 {
-    char szPath[PMP];
-    FormatEx(SZ(szPath), SETTINGS_PATH, szGameFolder);
-
-    BUILD(szPath, szPath);
-
-    ReadConfig(szPath);
-}
-
-// 0 - Global, 1 - Triggers, 2 - Phrases
-int Section;
-
-void ReadConfig(const char[] szPath)
-{
     aTriggers.Clear();
 
+    if(!FileExists(szConfigPath))
+        SetFailState("Where is my config: %s ???", szConfigPath);
+    
     SMCParser smParser = new SMCParser();
     smParser.OnKeyValue = OnValueRead;
     smParser.OnEnterSection = OnSection;
     smParser.OnEnd = OnParseEnded;
 
-    if(!FileExists(szPath))
-        SetFailState("Where is my config??");
-    
     int iLine;
 
-    if(smParser.ParseFile(szPath, iLine) != SMCError_Okay)
-        LogError("Error On parse: %s | Line: %d", szPath, iLine);
+    if(smParser.ParseFile(szConfigPath, iLine) != SMCError_Okay)
+        LogError("Fail on line '%i' when parse config file", iLine);
 }
+
+// 0 - Global, 1 - Triggers, 2 - Phrases
+int Section;
 
 SMCResult OnSection(SMCParser smc, const char[] name, bool opt_quotes)
 {
@@ -130,12 +137,6 @@ SMCResult OnValueRead(SMCParser smc, const char[] sKey, const char[] sValue, boo
 
 public void OnParseEnded(SMCParser smc, bool halted, bool failed)
 {
-    if(halted || failed)
-    {
-        LogError("Parse failed");
-        return;
-    }
-
     clPoc_ParseEnded();
 }
 
@@ -148,7 +149,7 @@ public Action ServerMsg_CB(UserMsg msg_id, Handle msg, const int[] players, int 
     if(Msg_type != 3)
         return Plugin_Continue;
 
-    char szBuffer[PMP];
+    char szBuffer[MESSAGE_LENGTH];
 
     if(!umType) BfReadString(msg, SZ(szBuffer));
     else PbReadString(msg, "params", SZ(szBuffer), 0);
@@ -166,7 +167,7 @@ public Action ServerMsg_CB(UserMsg msg_id, Handle msg, const int[] players, int 
         return Plugin_Continue;
     }
 
-    ArrayList arr = new ArrayList(PMP, 0);
+    ArrayList arr = new ArrayList(MESSAGE_LENGTH, 0);
     arr.Push(Msg_type);
     arr.PushString(szBuffer);
     arr.PushArray(players, playersNum);
@@ -178,7 +179,7 @@ public Action ServerMsg_CB(UserMsg msg_id, Handle msg, const int[] players, int 
 
 public void OnFrRequest(any data)
 {
-    char szMessage[PMP];
+    char szMessage[MESSAGE_LENGTH];
     view_as<ArrayList>(data).GetString(1, SZ(szMessage));
 
     int[] players = new int[view_as<ArrayList>(data).Get(3)];
@@ -193,7 +194,7 @@ public void OnFrRequest(any data)
 
 public Action MsgText_CB(UserMsg msg_id, Handle msg, const int[] players, int playersNum, bool reliable, bool init)
 {
-    static char szName[128], szMessage[384], szBuffer[640];
+    static char szName[NAME_LENGTH], szMessage[MESSAGE_LENGTH], szBuffer[MAX_LENGTH];
     static int iIndex;
     static bool ToAll;
 
@@ -234,7 +235,6 @@ public Action MsgText_CB(UserMsg msg_id, Handle msg, const int[] players, int pl
 
     GetMessageByPrototype(iIndex, GetClientTeam(iIndex), (iIndex) ? IsPlayerAlive(iIndex) : false, ToAll, SZ(szName), SZ(szMessage), SZ(szBuffer));
     
-    TrimString(szMessage);
     if(!szMessage[0])
         return Plugin_Handled;
         
@@ -276,11 +276,9 @@ public void SayTextComp(UserMsg msgid, bool send)
     }
 }
 
-
 void clProc_Replace(char[] szBuffer, int iSize)
 {
-    static char szTrigger[64];
-    static char szColors[16];
+    static char szTrigger[STATUS_LENGTH], szColors[STATUS_LENGTH];
 
     for(int i; i < aTriggers.Length; i+=2)
     {
@@ -293,7 +291,7 @@ void clProc_Replace(char[] szBuffer, int iSize)
 
 void clProc_ClearColors(char[] szBuffer, int iLen)
 {
-    static char szColor[64];
+    static char szColor[STATUS_LENGTH];
     for(int i; i < aTriggers.Length; i++)
     {
         aTriggers.GetString(i, SZ(szColor));
@@ -303,22 +301,24 @@ void clProc_ClearColors(char[] szBuffer, int iLen)
 
 void GetMessageByPrototype(int iIndex, int iTeam, bool IsAlive, bool ToAll, char[] szName, int NameSize, char[] szMessage, int MsgSize, char[] szBuffer, int iSize)
 {
-    static char Other[128];
+    static char Other[MESSAGE_LENGTH];
 
     SetGlobalTransTarget(iIndex);
 
-    szBuffer[0] = 1;
-    //LogMessage("inProt: %s", szBuffer);
+    //szBuffer[0] = 1;
     Other = "";
 
-    Format(szBuffer, iSize, "%s %s", szBuffer, msgPrototype[view_as<int>(ToAll)]);
+    FormatEx(szBuffer, iSize, msgPrototype[view_as<int>(ToAll)]);
+    clProc_RebuildString(iIndex, "{PROTOTYPE}", szBuffer, sizeof(msgPrototype[]));
+
+    Format(szBuffer, iSize, "%c %s", 1, szBuffer);
     
     if(StrContains(szBuffer, "{STATUS}") != -1)
     {
         if(iIndex)
-            FormatEx(SZ(Other), "%t", (IsAlive) ? "ClientStatus_Alive" : "ClientStatus_Died");
+            FormatEx(Other, STATUS_LENGTH, "%t", (IsAlive) ? "ClientStatus_Alive" : "ClientStatus_Died");
         
-        clProc_RebuildString(iIndex, "{STATUS}", SZ(Other));
+        clProc_RebuildString(iIndex, "{STATUS}", Other, STATUS_LENGTH);
         ReplaceString(szBuffer, iSize, "{STATUS}", Other, true);
     }
 
@@ -326,7 +326,7 @@ void GetMessageByPrototype(int iIndex, int iTeam, bool IsAlive, bool ToAll, char
     {
         if(iIndex)
             FormatEx(
-                SZ(Other), "%t", 
+                Other, TEAM_LENGTH, "%t", 
                 (iTeam == 1 && ToAll) ? "TeamSPECAll" : 
                 (iTeam == 1 && !ToAll) ? "TeamSPEC" :
                 (iTeam == 2 && ToAll) ? "TeamTAll" :
@@ -335,14 +335,14 @@ void GetMessageByPrototype(int iIndex, int iTeam, bool IsAlive, bool ToAll, char
                 "TeamCT"
             );
         
-        clProc_RebuildString(iIndex, "{TEAM}", SZ(Other));
+        clProc_RebuildString(iIndex, "{TEAM}", Other, TEAM_LENGTH);
         ReplaceString(szBuffer, iSize, "{TEAM}", Other, true);
     }
 
     if(StrContains(szBuffer, "{PREFIX}") != -1)
     {
         Other = "";
-        clProc_RebuildString(iIndex, "{PREFIX}", SZ(Other));        
+        clProc_RebuildString(iIndex, "{PREFIX}", Other, PREFIX_LENGTH);        
         ReplaceString(szBuffer, iSize, "{PREFIX}", Other, true);
     }
 
@@ -357,15 +357,14 @@ void GetMessageByPrototype(int iIndex, int iTeam, bool IsAlive, bool ToAll, char
         clProc_RebuildString(iIndex, "{MSG}", szMessage, MsgSize);
         TrimString(szMessage);
 
-        if(szMessage[0])
-            ReplaceString(szBuffer, iSize, "{MSG}", szMessage, true);
+        ReplaceString(szBuffer, iSize, "{MSG}", szMessage, true);
     }
         
 }
 
 public int Native_ClearAllColors(Handle hPlugin, int iArgs)
 {
-    char szBuffer[PMP];
+    char szBuffer[MESSAGE_LENGTH];
     GetNativeString(1, SZ(szBuffer));
 
     clProc_ClearColors(SZ(szBuffer));

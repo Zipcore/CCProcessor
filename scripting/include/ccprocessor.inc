@@ -12,7 +12,7 @@ forward bool cc_proc_SkipColorsInMsg(int iClient);
 
 /* 
 	Prototype properties of the client message
-	const char[] szBind = {TEAM}, {NAME}, {MSG}, {STATUS}
+	const char[] szBind = {TEAM}, {NAME}, {MSG}, {STATUS}, {PROTOTYPE}
 */
 forward void cc_proc_RebuildString(int iClient, int &pLevel, const char[] szBind, char[] szBuffer, int iSize);
 
