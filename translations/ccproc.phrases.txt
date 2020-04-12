@@ -36,6 +36,12 @@
         "en"                "{T}(Private SPEC)"
     }
 
+    "RadioMsg"
+    {
+        "ru"                "{V}(Radio)"
+        "en"                "{V}(Radio)"
+    }
+
     "ClientStatus_Alive"
     {
         "ru"                "{G}•"
