@@ -150,4 +150,24 @@
         "en"                "{GO}Gold"
     }
 
+    "list_of_prefix"
+    {
+        "ru"                "Список доступных префиксов:"
+        "en"                "List of prefixes:"
+    }
+
+    "ccp_disable"
+    {
+        "ru"                "Убрать"
+        "en"                "Remove"
+    }
+
+    "ccp_prefix_changed"
+    {
+        "#format"           "{1:s}"
+
+        "ru"                "{G}[INDPREF] {W}Ваш префикс изменен на: {G}{1}"
+        "en"                "{G}[INDPREF] {W}Your prefix was changed to {G}{1}"
+    }
+
 }
