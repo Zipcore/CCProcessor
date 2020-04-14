@@ -3,11 +3,22 @@
 #include ccprocessor
 #include clientprefs
 
-#define PlugName "[CCP] Individual Prefix"
-#define PlugDesc "Sets an individual prefix for the player based on the criteria"
-#define PlugVer "1.0a"
+public Plugin myinfo = 
+{
+	name = "[CCP] Individual Prefix",
+	author = "nullent?",
+	description = "Sets an individual prefix for the player based on the criteria",
+	version = "1.0.2",
+	url = "discord.gg/ChTyPUG"
+};
 
-#include std
+#define SZ(%0)	%0, sizeof(%0)
+#define BUILD(%0,%1) BuildPath(Path_SM, SZ(%0), %1)
+#define _CVAR_INIT_CHANGE(%0,%1) %0(FindConVar(%1), NULL_STRING, NULL_STRING)
+#define _CVAR_ON_CHANGE(%0) public void %0(ConVar cvar, const char[] szOldVal, const char[] szNewVal)
+
+#define PMP PLATFORM_MAX_PATH
+#define MPL MAXPLAYERS+1
 
 #define PATH  "configs/c_var/customprefix/customprefix.ini"
 
@@ -22,7 +33,7 @@ enum eAccess
 enum struct eIndividualPrefix
 {
     eAccess eIType;
-    char eIPrefix[128];
+    char eIPrefix[PREFIX_LENGTH];
 
     void Clear()
     {
@@ -36,7 +47,7 @@ ArrayList aPrefixBase;
 
 Cookie cooPrefix;
 
-char ClientPrefix[MPL][128];
+char ClientPrefix[MPL][PREFIX_LENGTH];
 
 int PLEVEL;
 
@@ -44,7 +55,7 @@ public void OnPluginStart()
 {
     LoadTranslations("ccproc.phrases");
 
-    aPrefixBase = new ArrayList(128, 0);
+    aPrefixBase = new ArrayList(PREFIX_LENGTH, 0);
     cooPrefix = new Cookie("ccp_individprefix", "Player individual prefix", CookieAccess_Private);
 
     CreateConVar("ccp_indprefix_priority", "1", "Priority of replacing the prefix", _, true, 0.0).AddChangeHook(OnPriorChange);
@@ -115,7 +126,7 @@ SMCResult OnValueRead(SMCParser smc, const char[] sKey, const char[] sValue, boo
 public void OnClientPutInServer(int iClient)
 {
     if(!aPlayerPrefixes[iClient])
-        aPlayerPrefixes[iClient] = new ArrayList(64, 0);
+        aPlayerPrefixes[iClient] = new ArrayList(PREFIX_LENGTH, 0);
     
     aPlayerPrefixes[iClient].Clear();
     ClientPrefix[iClient][0] = 0;
@@ -238,7 +249,7 @@ Menu PrefixesList(int iClient)
         hMenu = new Menu(PrefList_CallBack);
         hMenu.SetTitle("%t \n \n", "list_of_prefix");
 
-        char szBuffer[128], szOpt[8];
+        char szBuffer[PREFIX_LENGTH], szOpt[8];
         eIndividualPrefix eIBuffer;
         int DRAWTYPE;
 

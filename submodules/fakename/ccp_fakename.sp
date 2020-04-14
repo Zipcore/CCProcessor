@@ -2,13 +2,23 @@
 
 #include ccprocessor
 
-#define PlugName "[CCP] FakeUsername"
-#define PlugDesc "Ability to set a fake username in chat msgs"
-#define PlugVer "1.1"
+public Plugin myinfo = 
+{
+	name = "[CCP] FakeUsername",
+	author = "nullent?",
+	description = "Ability to set a fake username in chat msgs",
+	version = "1.1.1",
+	url = "discord.gg/ChTyPUG"
+};
 
-#include std
+#define SZ(%0)	%0, sizeof(%0)
+#define _CVAR_INIT_CHANGE(%0,%1) %0(FindConVar(%1), NULL_STRING, NULL_STRING)
+#define _CVAR_ON_CHANGE(%0) public void %0(ConVar cvar, const char[] szOldVal, const char[] szNewVal)
 
-char fakename[MPL][MNL];
+#define PMP PLATFORM_MAX_PATH
+#define MPL MAXPLAYERS+1
+
+char fakename[MPL][NAME_LENGTH];
 
 int AccessFlag, ROOT;
 int ClientFlags[MPL];

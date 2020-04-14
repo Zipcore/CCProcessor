@@ -4,13 +4,24 @@
 #include ccprocessor
 #include clientprefs
 
-#define PlugName "[CCP] VIP Chat"
-#define PlugDesc "Chat features for VIP by user R1KO"
-#define PlugVer "1.4"
-
-#include std
+public Plugin myinfo = 
+{
+	name = "[CCP] VIP Chat",
+	author = "nullent?",
+	description = "Chat features for VIP by user R1KO",
+	version = "1.4.1",
+	url = "discord.gg/ChTyPUG"
+};
 
 #define _CONFIG_PATH "data\\vip\\modules\\chat.ini"
+
+#define SZ(%0)	%0, sizeof(%0)
+#define BUILD(%0,%1) BuildPath(Path_SM, SZ(%0), %1)
+#define _CVAR_INIT_CHANGE(%0,%1) %0(FindConVar(%1), NULL_STRING, NULL_STRING)
+#define _CVAR_ON_CHANGE(%0) public void %0(ConVar cvar, const char[] szOldVal, const char[] szNewVal)
+
+#define PMP PLATFORM_MAX_PATH
+#define MPL MAXPLAYERS+1
 
 ArrayList aTriggers;
 ArrayList aPhrases;
@@ -32,10 +43,10 @@ enum
 
 int nLevel[3];
 
-char EnvColor[MPL][3][10];
-char ClientPrefix[MPL][128];
+char EnvColor[MPL][3][STATUS_LENGTH];
+char ClientPrefix[MPL][PREFIX_LENGTH];
 
-char ccl_current_feature[MPL][18];
+char ccl_current_feature[MPL][20];
 
 bool bCustom[MPL];
 
@@ -246,7 +257,7 @@ public bool OnDisplay_Feature(int iClient, const char[] szFeature, char[] szDisp
 {
     SetGlobalTransTarget(iClient);
 
-    char szFValue[64];
+    char szFValue[PREFIX_LENGTH];
 
     if(!strcmp(szFeature, szFeatures[E_Prefix]))
         strcopy(SZ(szFValue), ClientPrefix[iClient]);

@@ -10,6 +10,14 @@ enum
     eChangeUsername = 2
 };
 
+#define STATUS_LENGTH   16
+#define TEAM_LENGTH     24
+#define PREFIX_LENGTH   64
+#define NAME_LENGTH     128
+#define MESSAGE_LENGTH  PLATFORM_MAX_PATH
+
+#define MAX_LENGTH      512
+
 /*
  *	Skip colors in an unprepared message
  *

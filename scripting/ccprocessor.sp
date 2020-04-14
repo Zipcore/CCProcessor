@@ -2,13 +2,7 @@
 
 #define SETTINGS_PATH "configs/c_var/%s.ini"
 
-#define STATUS_LENGTH   16
-#define TEAM_LENGTH     24
-#define PREFIX_LENGTH   64
-#define NAME_LENGTH     128
-#define MESSAGE_LENGTH  PLATFORM_MAX_PATH
-
-#define MAX_LENGTH      512
+#include ccprocessor
 
 #define SZ(%0) %0, sizeof(%0)
 
@@ -26,12 +20,6 @@ char szConfigPath[MESSAGE_LENGTH];
 char msgPrototype[PROTO_COUNT][MESSAGE_LENGTH];
 
 ArrayList dClient;
-
-enum
-{
-    eDefaultMsg = 0,
-    eChangeUsername = 2
-};
 
 public Plugin myinfo = 
 {
