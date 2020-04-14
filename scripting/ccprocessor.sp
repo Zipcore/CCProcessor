@@ -12,7 +12,7 @@
 
 #define SZ(%0) %0, sizeof(%0)
 
-#define PROTO_COUNT     4
+#define PROTO_COUNT     3
 
 UserMessageType umType;
 
@@ -30,8 +30,7 @@ ArrayList dClient;
 enum
 {
     eDefaultMsg = 0,
-    eChangeUsername = 2,
-    eRadioMsg = 3
+    eChangeUsername = 2
 };
 
 public Plugin myinfo = 
@@ -39,7 +38,7 @@ public Plugin myinfo =
 	name = "CCProcessor",
 	author = "nullent?",
 	description = "Color chat processor",
-	version = "1.3.0",
+	version = "1.4.1",
 	url = "discord.gg/ChTyPUG"
 };
 
@@ -139,8 +138,7 @@ SMCResult OnValueRead(SMCParser smc, const char[] sKey, const char[] sValue, boo
         }
 
         default: strcopy(msgPrototype[(!strcmp(sKey, "Chat_PrototypeTeam")) ? 0 
-                                    : (!strcmp(sKey, "Chat_PrototypeAll")) ? 1
-                                    : (!strcmp(sKey, "Radio_Prototype")) ? 3 : 2], sizeof(msgPrototype[]), sValue);
+                                    : (!strcmp(sKey, "Chat_PrototypeAll")) ? 1 : 2], sizeof(msgPrototype[]), sValue);
     }
 
     return SMCParse_Continue;
@@ -167,7 +165,7 @@ public Action ServerMsg_CB(UserMsg msg_id, Handle msg, const int[] players, int 
 
     if(!clProc_ServerMsg(SZ(szBuffer)) || strlen(szBuffer) == 0)
         return Plugin_Handled;
-    
+
     clProc_Replace(SZ(szBuffer));
     
     Format(SZ(szBuffer), "%c %s", 1, szBuffer);
@@ -207,14 +205,13 @@ public Action MsgText_CB(UserMsg msg_id, Handle msg, const int[] players, int pl
 {
     static char szName[NAME_LENGTH], szMessage[MESSAGE_LENGTH], szBuffer[MAX_LENGTH];
     static int iIndex, MsgType;
-    static bool ToAll;
 
     szName = "";
     szMessage = "";
     szBuffer = "";
 
     iIndex = (!umType) ? BfReadByte(msg) : PbReadInt(msg, "ent_idx");
-    if(iIndex < 1 || !IsClientInGame(iIndex) || IsClientSourceTV(iIndex))
+    if(IsClientSourceTV(iIndex))
         return Plugin_Continue;
 
     if(!umType)
@@ -224,11 +221,8 @@ public Action MsgText_CB(UserMsg msg_id, Handle msg, const int[] players, int pl
     }
     else PbReadString(msg, "msg_name", SZ(szName));
 
-    MsgType = (StrContains(szName, "Cstrike_Name_Change") != -1) 
-            ? eChangeUsername : (StrContains(szName, "Game_radio") != -1) 
-            ? eRadioMsg : eDefaultMsg;
-
-    ToAll = (!umType) ? (StrContains(szName, "_All") != -1 || MsgType != 0) : PbReadBool(msg, "textallchat");
+    MsgType = (StrContains(szName, "Cstrike_Name_Change") != -1) ? eChangeUsername 
+            : view_as<int>(StrContains(szName, "_All") != -1); 
 
     if(!umType)
     {
@@ -245,7 +239,7 @@ public Action MsgText_CB(UserMsg msg_id, Handle msg, const int[] players, int pl
     if(!clProc_SkipColors(iIndex))
         clProc_ClearColors(SZ(szMessage));
 
-    GetMessageByPrototype(iIndex, MsgType, GetClientTeam(iIndex), (iIndex) ? IsPlayerAlive(iIndex) : false, ToAll, SZ(szName), SZ(szMessage), SZ(szBuffer));
+    GetMessageByPrototype(iIndex, MsgType, GetClientTeam(iIndex), IsPlayerAlive(iIndex), SZ(szName), SZ(szMessage), SZ(szBuffer));
     
     if(!szMessage[0] || !szBuffer[0])
         return Plugin_Handled;
@@ -311,7 +305,7 @@ void clProc_ClearColors(char[] szBuffer, int iLen)
     }
 }
 
-void GetMessageByPrototype(int iIndex, int iType, int iTeam, bool IsAlive, bool ToAll, char[] szName, int NameSize, char[] szMessage, int MsgSize, char[] szBuffer, int iSize)
+void GetMessageByPrototype(int iIndex, int iType, int iTeam, bool IsAlive, char[] szName, int NameSize, char[] szMessage, int MsgSize, char[] szBuffer, int iSize)
 {
     static char Other[MESSAGE_LENGTH];
 
@@ -322,7 +316,8 @@ void GetMessageByPrototype(int iIndex, int iType, int iTeam, bool IsAlive, bool 
 
     clProc_MessageBroadType(iType);
 
-    FormatEx(szBuffer, iSize, msgPrototype[(iType == 0) ? view_as<int>(ToAll) : iType]);
+    FormatEx(szBuffer, iSize, msgPrototype[iType]);
+
     clProc_RebuildString(iIndex, "{PROTOTYPE}", szBuffer, sizeof(msgPrototype[]));
 
     if(!szBuffer[0])
@@ -339,17 +334,16 @@ void GetMessageByPrototype(int iIndex, int iType, int iTeam, bool IsAlive, bool 
         ReplaceString(szBuffer, iSize, "{STATUS}", Other, true);
     }
 
-    if(StrContains(szBuffer, "{TEAM}") != -1)
+    if(StrContains(szBuffer, "{TEAM}") != -1 && iType != eChangeUsername)
     {
         if(iIndex)
             FormatEx(
                 Other, TEAM_LENGTH, "%t", 
-                (iType == 3) ? "RadioMsg" :
-                (iTeam == 1 && ToAll) ? "TeamSPECAll" : 
-                (iTeam == 1 && !ToAll) ? "TeamSPEC" :
-                (iTeam == 2 && ToAll) ? "TeamTAll" :
-                (iTeam == 2 && !ToAll) ? "TeamT" :
-                (iTeam == 3 && ToAll) ? "TeamCTAll" :
+                (iTeam == 1 && iType) ? "TeamSPECAll" : 
+                (iTeam == 1 && !iType) ? "TeamSPEC" :
+                (iTeam == 2 && iType) ? "TeamTAll" :
+                (iTeam == 2 && !iType) ? "TeamT" :
+                (iTeam == 3 && iType) ? "TeamCTAll" :
                 "TeamCT"
             );
         
@@ -454,7 +448,7 @@ void clProc_MessageBroadType(const int iType)
 {
     static Handle gf;
     if(!gf)
-        gf = CreateGlobalForward("cc_proc_MsgBroadType", ET_Ignore);
+        gf = CreateGlobalForward("cc_proc_MsgBroadType", ET_Ignore, Param_Cell);
     
     Call_StartForward(gf);
     Call_PushCell(iType);

@@ -7,8 +7,7 @@
 enum
 {
     eDefaultMsg = 0,
-    eChangeUsername = 2,
-    eRadioMsg = 3
+    eChangeUsername = 2
 };
 
 /*
