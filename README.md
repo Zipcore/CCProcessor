@@ -1,33 +1,29 @@
-[![Build Status](https://travis-ci.org/Nullent/CCProcessor.svg?branch=master)](https://github.com/Nullent/CCProcessor) 
-[![Online support](https://img.shields.io/discord/494942123548868609)](https://discord.gg/ChTyPUG) 
-[![Release Builds](https://img.shields.io/github/v/release/Nullent/CCProcessor)](https://github.com/Nullent/CCProcessor/releases)
+<h1 align="center">Color Chat Processor</h1>
+<p align="center">
+    <a href = "https://travis-ci.org/github/Nullent/CCProcessor/builds" title = "Build Status">
+        <img src="https://travis-ci.org/Nullent/CCProcessor.svg?branch=master" />
+    </a>
+    <a href = "https://discord.gg/ChTyPUG" title = "Online support">
+        <img src="https://img.shields.io/discord/494942123548868609" />
+    </a>
+    <a href="./releases" title="Releases">
+        <img src="https://img.shields.io/github/v/release/Nullent/CCProcessor" />
+    </a>
+</p>
 
-CCProcessor
-============
-Обработчик игрового чата. <br>
-Преимуществом данного процессора является умение хранить и обрабатывать цветовую палитру в режиме реального времени. <br>
-Это позволяет отбросить необходимость подключения библиотек с палитрой цветов в плагины :raised_hands:
+## Description
+The processor is based on real-time processing of color tags and subsequent interpretation.
+This makes it possible to use color tags without third-party modifications of standard functions and color libraries.
 
-Поддержка:
+## Game support
 ---------
-- CS:GO
-- CS:S OB
-- TF2
-- L4D2 [?]
+- Counter-Strike: Global Offensive
+- Counter-Strike: Source (Open Beta)
+- Team Fortress 2
+- Left 4 Dead 2
 
-Требования:
+## Requirements:
 -------------
 - Sourcemod 
     - Version 1.9 [ [Win](http://sourcemod.net/latest.php?os=windows&version=1.9) | [Linux](http://sourcemod.net/latest.php?os=linux&version=1.9) ]
     - Version 1.10 [ [Win](http://sourcemod.net/latest.php?os=windows&version=1.10) | [Linux](http://sourcemod.net/latest.php?os=linux&version=1.10) ]
-
-Демонстрация:
-------------------
-
-<details>
-    <summary> (CT) Valya: {R} Будет красный {G} Будет зеленый </summary>
-    <p>
-        <a href = "/screens/csgo.png"><img src = "/screens/csgo.png" /></a>
-        <a href = "/screens/css.png"><img src = "/screens/css.png" /></a>
-    </p>
-</details>
