@@ -6,7 +6,7 @@
     <a href = "https://discord.gg/ChTyPUG" title = "Online support">
         <img src="https://img.shields.io/discord/494942123548868609" />
     </a>
-    <a href="./releases" title="Releases">
+    <a href="https://github.com/Nullent/CCProcessor/releases" title="Releases">
         <img src="https://img.shields.io/github/v/release/Nullent/CCProcessor" />
     </a>
 </p>
