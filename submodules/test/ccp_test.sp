@@ -2,105 +2,67 @@
 
 #include ccprocessor
 
-#define GREEN   "{G}"
-#define RED     "{R}"
+#define LEVEL_PRIOR     1
 
-#define P_LEVEL_MSG     1
-#define P_LEVEL_NAME    1
+bool EnableSkip;
+char testPrefix[PREFIX_LENGTH];
 
 public void OnPluginStart()
 {
-    RegConsoleCmd("ccl_test", Cmd_ccl);
-    RegConsoleCmd("ccl_namecolor", cmd_ccl_name);
-    RegConsoleCmd("ccl_msgcolor", cmd_ccl_msg);
-    RegConsoleCmd("ccl_servercolor", cmd_ccl_server);
-    RegConsoleCmd("ccl_say", cmd_ccl_say);
+    RegConsoleCmd("sm_skipcolors", CmdSkip);
+    RegConsoleCmd("sm_testserver", CmdTestServer);
+    RegConsoleCmd("sm_testprefix", CmdTestPrefix);
 }
 
-public Action Cmd_ccl(int iClient, int iArgs)
+Action CmdSkip(int Client, int args)
 {
-    PrintToChatAll("%sHello, i'm a %sServer!", GREEN, RED);
-    if(iClient && IsClientInGame(iClient))
-        PrintToChat(iClient, "%sHello, %s%N", GREEN, RED, iClient);
-
-    return Plugin_Handled;
-}
-
-bool IsEnabled_Name[MAXPLAYERS+1];
-bool IsEnabled_Msg[MAXPLAYERS+1];
-bool IsEnabled_Server;
-
-public bool OnClientConnect(int iClient, char[] rejectmsg, int maxlen)
-{
-    IsEnabled_Name[iClient] = false;
-    IsEnabled_Msg[iClient] = false;
-
-    return true;
-}
-
-public Action cmd_ccl_name(int iClient, int iArgs)
-{
-    if(iClient && IsClientInGame(iClient))
-    {
-        IsEnabled_Name[iClient] = !IsEnabled_Name[iClient];
+    if(Client && IsClientInGame(Client))
+        PrintToChatAll("The color skip status was changed to {G}%s", (EnableSkip = !EnableSkip) ? "true" : "false");
     
-        PrintToChat(iClient, "%sName Color: %s%b", GREEN, RED, IsEnabled_Name[iClient]);
-    }
-        
     return Plugin_Handled;
 }
 
-public Action cmd_ccl_msg(int iClient, int iArgs)
+public bool cc_proc_SkipColorsInMsg(int Client)
 {
-    if(iClient && IsClientInGame(iClient))
-    {
-        IsEnabled_Msg[iClient] = !IsEnabled_Msg[iClient];
+    return EnableSkip;
+}
+
+Action CmdTestServer(int Client, int args)
+{
+    PrintToChatAll("{PI}[Console] {G}Hello, i am a {PI}Server!");
+    return Plugin_Handled;
+}
+
+Action CmdTestPrefix(int Client, int Args)
+{
+    if(!testPrefix[0])
+        testPrefix = "{PI}[TEST] ";
+    else testPrefix[0] = 0;
+
+    PrintToChatAll("The test prefix now is {G}%s", (testPrefix[0]) ? "enabled" : "disabled");
+
+    return Plugin_Handled;
+}
+
+int iType;
+
+public void cc_proc_MsgBroadType(const int typeMsg)
+{
+    iType = typeMsg;
+}
+
+public void cc_proc_RebuildString(int iClient, int &pLevel, const char[] szBind, char[] szBuffer, int iSize)
+{
+    if(iType == eChangeUsername)
+        return;
     
-        PrintToChat(iClient, "%sMsg color: %s%b", GREEN, RED, IsEnabled_Msg[iClient]);
-    }
-        
-    return Plugin_Handled;
-}
+    if(!StrEqual(szBind, "{PREFIX}") || !testPrefix[0])
+        return;
 
-public Action cmd_ccl_server(int iClient, int iArgs)
-{
-    IsEnabled_Server = !IsEnabled_Server;
-    PrintToChatAll("%sServer color: %s%b", GREEN, RED, IsEnabled_Server);
+    if(pLevel > LEVEL_PRIOR)
+        return;
+    
+    pLevel = LEVEL_PRIOR;
 
-    return Plugin_Handled;
-}
-
-public Action cmd_ccl_say(int iClient, int iArgs)
-{
-    PrintToChatAll("test");
-    return Plugin_Handled;
-}
-
-public void cc_proc_RebuildString(int iClient, int &plevel, const char[] szBind, char[] szBuffer, int iSize)
-{
-    if(!strcmp(szBind, "{MSG}") && IsEnabled_Msg[iClient] && plevel < P_LEVEL_MSG)
-    {
-        plevel = P_LEVEL_MSG;
-        cc_clear_allcolors(szBuffer, iSize);
-
-        Format(szBuffer, iSize, "%s%s", GREEN, szBuffer);
-    }
-
-    else if(!strcmp(szBind, "{NAME}") && IsEnabled_Name[iClient] && plevel < P_LEVEL_NAME)
-    {
-        plevel = P_LEVEL_NAME;
-        cc_clear_allcolors(szBuffer, iSize);
-        
-        Format(szBuffer, iSize, "%s%s", RED, szBuffer);
-    }
-}
-
-public bool cc_proc_OnServerMsg(char[] szMessage, int MsgLen)
-{
-    if(IsEnabled_Server)
-    {
-        Format(szMessage, MsgLen, "%s%s", GREEN, szMessage);
-    }
-
-    return true;
+    FormatEx(szBuffer, iSize, testPrefix);
 }
