@@ -53,7 +53,7 @@ public void cc_proc_MsgBroadType(const int typeMsg)
 
 public void cc_proc_RebuildString(int iClient, int &pLevel, const char[] szBind, char[] szBuffer, int iSize)
 {
-    if(iType == eChangeUsername)
+    if(iType == eMsg_CNAME)
         return;
     
     if(!StrEqual(szBind, "{PREFIX}") || !testPrefix[0])
