@@ -209,7 +209,7 @@ public Action MsgText_CB(UserMsg msg_id, Handle msg, const int[] players, int pl
     }
     else PbReadString(msg, "msg_name", SZ(szName));
 
-    MsgType = (StrContains(szName, "Cstrike_Name_Change") != -1) ? eChangeUsername 
+    MsgType = (StrContains(szName, "Cstrike_Name_Change") != -1) ? eMsg_CNAME 
             : view_as<int>(StrContains(szName, "_All") != -1); 
 
     if(!umType)
@@ -322,7 +322,7 @@ void GetMessageByPrototype(int iIndex, int iType, int iTeam, bool IsAlive, char[
         ReplaceString(szBuffer, iSize, "{STATUS}", Other, true);
     }
 
-    if(StrContains(szBuffer, "{TEAM}") != -1 && iType != eChangeUsername)
+    if(StrContains(szBuffer, "{TEAM}") != -1 && iType != eMsg_CNAME)
     {
         if(iIndex)
             FormatEx(
