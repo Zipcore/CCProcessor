@@ -6,15 +6,16 @@
 // Types of message
 enum
 {
-    eDefaultMsg = 0,
-    eChangeUsername = 2
+    eMsg_TEAM = 0,
+	eMsg_ALL,
+    eMsg_CNAME
 };
 
 #define STATUS_LENGTH   16
 #define TEAM_LENGTH     24
 #define PREFIX_LENGTH   64
 #define NAME_LENGTH     128
-#define MESSAGE_LENGTH  PLATFORM_MAX_PATH
+#define MESSAGE_LENGTH  256
 
 #define MAX_LENGTH      512
 
@@ -58,9 +59,6 @@ forward bool cc_proc_OnServerMsg(char[] szMessage, int MsgLen);
  * 	@noreturn
 */
 forward void cc_config_parsed();
-
-#pragma deprecated "Now called cc_proc_MsgBroadType()"
-forward Action cc_proc_OnUsernameChangedMsg();
 
 /*
  *	Calls before building a message
