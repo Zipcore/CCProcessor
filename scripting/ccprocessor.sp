@@ -26,7 +26,7 @@ public Plugin myinfo =
 	name = "CCProcessor",
 	author = "nullent?",
 	description = "Color chat processor",
-	version = "1.4.1",
+	version = "1.4.2",
 	url = "discord.gg/ChTyPUG"
 };
 
@@ -150,6 +150,9 @@ public Action ServerMsg_CB(UserMsg msg_id, Handle msg, const int[] players, int 
 
     if(!umType) BfReadString(msg, SZ(szBuffer));
     else PbReadString(msg, "params", SZ(szBuffer), 0);
+
+    if(szBuffer[0] == '#')
+        return Plugin_Continue;
 
     if(!clProc_ServerMsg(SZ(szBuffer)) || strlen(szBuffer) == 0)
         return Plugin_Handled;
