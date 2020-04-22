@@ -4,14 +4,15 @@ Plugin(source='submodules/test/skipcolors_example.sp', deps=['ccprocessor'])
 Plugin(source='submodules/fakename/ccp_fakename.sp', deps=['ccprocessor'])
 Plugin(source='submodules/vipchat/scripting/ccp_vipchat.sp', deps=['ccprocessor'])
 Plugin(source='submodules/indivprefix/scripting/ccp_indprefix.sp', deps=['ccprocessor'])
+Plugin(source='submodules/nosmprefix/ccp_nosm.sp', deps=['ccprocessor'])
 
 Package(name='ccproc-all',
-        plugins=['ccprocessor', 'ccp_test', 'ccp_fakename', 'ccp_vipchat', 'ccp_indprefix', 'skipcolors_example'],
+        plugins=['ccprocessor', 'ccp_test', 'ccp_fakename', 'ccp_vipchat', 'ccp_indprefix', 'skipcolors_example', 'ccp_nosm'],
 )
 
 Package(name='ccproc-release',
         extends=['ccproc-all'],
-        disabled_plugins=['ccp_test', 'ccp_fakename', 'ccp_vipchat', 'ccp_indprefix', 'skipcolors_example'],
+        disabled_plugins=['ccp_test', 'ccp_fakename', 'ccp_vipchat', 'ccp_indprefix', 'skipcolors_example', 'ccp_nosm'],
         filegroups={
             '.': ['LICENSE' , 'README.md'],
         },
