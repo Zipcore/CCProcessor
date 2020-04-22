@@ -151,11 +151,11 @@ public Action ServerMsg_CB(UserMsg msg_id, Handle msg, const int[] players, int 
     if(!umType) BfReadString(msg, SZ(szBuffer));
     else PbReadString(msg, "params", SZ(szBuffer), 0);
 
-    if(szBuffer[0] == '#')
-        return Plugin_Continue;
-
     if(!clProc_ServerMsg(SZ(szBuffer)) || strlen(szBuffer) == 0)
         return Plugin_Handled;
+
+    if(szBuffer[0] == '#')
+        return Plugin_Continue;
 
     clProc_Replace(SZ(szBuffer));
     
