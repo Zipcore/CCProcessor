@@ -26,7 +26,7 @@ public Plugin myinfo =
 	name = "CCProcessor",
 	author = "nullent?",
 	description = "Color chat processor",
-	version = "1.4.2",
+	version = "1.5",
 	url = "discord.gg/ChTyPUG"
 };
 
@@ -100,18 +100,32 @@ SMCResult OnValueRead(SMCParser smc, const char[] sKey, const char[] sValue, boo
     if(!sKey[0] || !sValue[0])
         return SMCParse_Continue;
 
+    static int ColorLen;
+
     switch(Section)
     {
         case 1:
         {
-            char szBuffer[16];
+            char szBuffer[STATUS_LENGTH];
 
             aTriggers.PushString(sKey);
 
-            if(strlen(sValue) > 3)
-                FormatEx(SZ(szBuffer), "\x07%s", sValue);
-            else
-                FormatEx(SZ(szBuffer), "%c", StringToInt(sValue));
+            ColorLen = strlen(sValue);
+
+            switch(ColorLen)
+            {
+                // Defined ASCII colors
+                case 1, 2:
+                {
+                    FormatEx(SZ(szBuffer), "%c", StringToInt(sValue));
+                }
+
+                // Colors based RGB/RGBA into HEX format: #RRGGBB/#RRGGBBAA
+                case 7: FormatEx(SZ(szBuffer), "\x07%s", sValue[1]);
+                case 9: FormatEx(SZ(szBuffer), "\x08%s", sValue[1]);
+
+                default: LogError("Invalid color length '%i' for value: %s", ColorLen, sValue);
+            }                
 
             aTriggers.PushString(szBuffer);
         }
