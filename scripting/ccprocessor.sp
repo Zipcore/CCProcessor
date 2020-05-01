@@ -1,33 +1,29 @@
 #pragma newdecls required
 
+#define PROTO_COUNT     3
 #define SETTINGS_PATH "configs/c_var/%s.ini"
+#define SZ(%0) %0, sizeof(%0)
 
 #include ccprocessor
 
-#define SZ(%0) %0, sizeof(%0)
-
-#define PROTO_COUNT     3
-
 UserMessageType umType;
 
-/* Key:Color */
-ArrayList aTriggers;
+ArrayList 
+    aTriggers,
+    aPhrases,
+    dClient;
 
-/* Key:Translation */
-ArrayList aPhrases;
-
-char szConfigPath[MESSAGE_LENGTH];
-char msgPrototype[PROTO_COUNT][MESSAGE_LENGTH];
-
-ArrayList dClient;
+char 
+    szConfigPath[MESSAGE_LENGTH],
+    msgPrototype[PROTO_COUNT][MESSAGE_LENGTH];
 
 public Plugin myinfo = 
 {
-	name = "CCProcessor",
-	author = "nullent?",
-	description = "Color chat processor",
-	version = "1.5",
-	url = "discord.gg/ChTyPUG"
+    name        = "CCProcessor",
+    author      = "nullent?",
+    description = "Color chat processor",
+    version     = "1.5.1",
+    url         = "discord.gg/ChTyPUG"
 };
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
@@ -80,18 +76,14 @@ public void OnMapStart()
         LogError("Fail on line '%i' when parse config file", iLine);
 }
 
-// 0 - Global, 1 - Triggers, 2 - Phrases
 int Section;
 
 SMCResult OnSection(SMCParser smc, const char[] name, bool opt_quotes)
 {
-    if(!strcmp(name, "Triggers"))
-        Section = 1;
-    
-    else if(!strcmp(name, "Phrases"))
-        Section = 2;
-    
-    else Section = 0;
+    Section = 
+        (!strcmp(name, "Triggers")) ? 1 : 
+        (!strcmp(name, "Phrases")) ? 2 : 0;
+
     return SMCParse_Continue;
 }
 
@@ -101,47 +93,45 @@ SMCResult OnValueRead(SMCParser smc, const char[] sKey, const char[] sValue, boo
         return SMCParse_Continue;
 
     static int ColorLen;
+    static char szBuffer[STATUS_LENGTH];
 
-    switch(Section)
+    if(Section == 1)
     {
-        case 1:
+        szBuffer = NULL_STRING;
+
+        aTriggers.PushString(sKey);
+
+        ColorLen = strlen(sValue);
+
+        switch(ColorLen)
         {
-            char szBuffer[STATUS_LENGTH];
+            // Defined ASCII colors
+            case 1, 2: FormatEx(SZ(szBuffer), "%c", StringToInt(sValue));
 
-            aTriggers.PushString(sKey);
+            // Colors based RGB/RGBA into HEX format: #RRGGBB/#RRGGBBAA
+            case 7, 9: FormatEx(SZ(szBuffer), "%c%s", (ColorLen == 7) ? 7 : 8, sValue[1]);
 
-            ColorLen = strlen(sValue);
+            default: LogError("Invalid color length '%i' for value: %s", ColorLen, sValue);
+        }                
 
-            switch(ColorLen)
-            {
-                // Defined ASCII colors
-                case 1, 2:
-                {
-                    FormatEx(SZ(szBuffer), "%c", StringToInt(sValue));
-                }
+        aTriggers.PushString(szBuffer);
+    }
 
-                // Colors based RGB/RGBA into HEX format: #RRGGBB/#RRGGBBAA
-                case 7: FormatEx(SZ(szBuffer), "\x07%s", sValue[1]);
-                case 9: FormatEx(SZ(szBuffer), "\x08%s", sValue[1]);
-
-                default: LogError("Invalid color length '%i' for value: %s", ColorLen, sValue);
-            }                
-
-            aTriggers.PushString(szBuffer);
-        }
-
-        case 2:
-        {
-            if(aTriggers.FindString(sKey) == -1)
+    else if(Section == 2)
+    {
+        if(aTriggers.FindString(sKey) == -1)
                 return SMCParse_Continue;
 
-            aPhrases.PushString(sKey);
-            aPhrases.PushString(sValue);
-        }
-
-        default: strcopy(msgPrototype[(!strcmp(sKey, "Chat_PrototypeTeam")) ? 0 
-                                    : (!strcmp(sKey, "Chat_PrototypeAll")) ? 1 : 2], sizeof(msgPrototype[]), sValue);
+        aPhrases.PushString(sKey);
+        aPhrases.PushString(sValue);
     }
+
+    ColorLen = (!strcmp(sKey, "Chat_PrototypeTeam")) ? 0 : 
+                (!strcmp(sKey, "Chat_PrototypeAll")) ? 1 : 
+                (!strcmp(sKey, "Changename_Prototype")) ? 2 : -1;
+    
+    if(ColorLen != -1)
+        strcopy(msgPrototype[ColorLen], sizeof(msgPrototype[]), sValue);
 
     return SMCParse_Continue;
 }
@@ -154,24 +144,24 @@ public void OnParseEnded(SMCParser smc, bool halted, bool failed)
 public Action ServerMsg_CB(UserMsg msg_id, Handle msg, const int[] players, int playersNum, bool reliable, bool init)
 {
     static int Msg_type;
-
-    /* 0 - ? | 1 - Console | 2 - Console | 3 - Chat | 4 - Hint | 5 - ?*/
     Msg_type = (!umType) ? BfReadByte(msg) : PbReadInt(msg, "msg_dst");
+
     if(Msg_type != 3)
         return Plugin_Continue;
 
-    char szBuffer[MESSAGE_LENGTH];
+    static char szBuffer[MESSAGE_LENGTH];
+    szBuffer = NULL_STRING;
 
     if(!umType) BfReadString(msg, SZ(szBuffer));
     else PbReadString(msg, "params", SZ(szBuffer), 0);
 
-    if(!clProc_ServerMsg(SZ(szBuffer)) || strlen(szBuffer) == 0)
+    if(!clProc_ServerMsg(SZ(szBuffer)) || !szBuffer[0])
         return Plugin_Handled;
 
-    if(szBuffer[0] == '#')
+    else if(szBuffer[0] == '#')
         return Plugin_Continue;
 
-    clProc_Replace(SZ(szBuffer));
+    clProc_Replace(SZ(szBuffer), false);
     
     Format(SZ(szBuffer), "%c %s", 1, szBuffer);
 
@@ -199,7 +189,15 @@ public void OnFrRequest(any data)
     int[] players = new int[view_as<ArrayList>(data).Get(3)];
     view_as<ArrayList>(data).GetArray(2, players, view_as<ArrayList>(data).Get(3));
 
-    BfWrite rewriteB = UserMessageToBfWrite(StartMessage("TextMsg", players, view_as<ArrayList>(data).Get(3), USERMSG_RELIABLE|USERMSG_BLOCKHOOKS));
+    BfWrite rewriteB = 
+    UserMessageToBfWrite(
+        StartMessage(
+            "TextMsg", players, 
+            view_as<ArrayList>(data).Get(3), 
+            USERMSG_RELIABLE|USERMSG_BLOCKHOOKS
+        )
+    );
+
     rewriteB.WriteByte(view_as<ArrayList>(data).Get(0));
     rewriteB.WriteString(szMessage);
     rewriteB.WriteString(NULL_STRING);
@@ -226,8 +224,9 @@ public Action MsgText_CB(UserMsg msg_id, Handle msg, const int[] players, int pl
     }
     else PbReadString(msg, "msg_name", SZ(szName));
 
-    MsgType = (StrContains(szName, "Cstrike_Name_Change") != -1) ? eMsg_CNAME 
-            : view_as<int>(StrContains(szName, "_All") != -1); 
+    MsgType = (StrContains(szName, "Cstrike_Name_Change") != -1) ? 
+                eMsg_CNAME : 
+                view_as<int>(StrContains(szName, "_All") != -1); 
 
     if(!umType)
     {
@@ -240,16 +239,21 @@ public Action MsgText_CB(UserMsg msg_id, Handle msg, const int[] players, int pl
         PbReadString(msg, "params", SZ(szMessage), 1);
     }
 
-    clProc_ClearColors(SZ(szName));
-    if(!clProc_SkipColors(iIndex))
-        clProc_ClearColors(SZ(szMessage));
+    clProc_Replace(SZ(szName), true);
 
-    GetMessageByPrototype(iIndex, MsgType, GetClientTeam(iIndex), IsPlayerAlive(iIndex), SZ(szName), SZ(szMessage), SZ(szBuffer));
+    if(!clProc_SkipColors(iIndex))
+        clProc_Replace(SZ(szMessage), true);
+
+    GetMessageByPrototype(
+        iIndex, MsgType, 
+        GetClientTeam(iIndex), IsPlayerAlive(iIndex), 
+        SZ(szName), SZ(szMessage), SZ(szBuffer)
+    );
     
     if(!szMessage[0] || !szBuffer[0])
         return Plugin_Handled;
         
-    clProc_Replace(SZ(szBuffer));
+    clProc_Replace(SZ(szBuffer), false);
 
     if(umType)
     {
@@ -277,7 +281,15 @@ public void SayTextComp(UserMsg msgid, bool send)
         int[] players = new int[dClient.Get(3)];
         dClient.GetArray(2, players, dClient.Get(3));
 
-        BfWrite bf = UserMessageToBfWrite(StartMessage("SayText2", players, dClient.Get(3), USERMSG_RELIABLE|USERMSG_BLOCKHOOKS));
+        BfWrite bf = 
+        UserMessageToBfWrite(
+            StartMessage(
+                "SayText2", players, 
+                dClient.Get(3), 
+                USERMSG_RELIABLE|USERMSG_BLOCKHOOKS
+            )
+        );
+
         bf.WriteByte(dClient.Get(0));
         bf.WriteByte(1);
         bf.WriteString(szMessage);
@@ -287,30 +299,28 @@ public void SayTextComp(UserMsg msgid, bool send)
     }
 }
 
-void clProc_Replace(char[] szBuffer, int iSize)
+void clProc_Replace(char[] szBuffer, int iSize, bool bToNullStr)
 {
-    static char szTrigger[STATUS_LENGTH], szColors[STATUS_LENGTH];
+    static char szKey[STATUS_LENGTH], szColor[STATUS_LENGTH];
+    szColor = "";
+    szKey   = "";
 
-    for(int i; i < aTriggers.Length; i+=2)
-    {
-        aTriggers.GetString(i, SZ(szTrigger));
-        aTriggers.GetString(i+1, SZ(szColors));
-
-        ReplaceString(szBuffer, iSize, szTrigger, szColors, true);
-    }
-}
-
-void clProc_ClearColors(char[] szBuffer, int iLen)
-{
-    static char szColor[STATUS_LENGTH];
     for(int i; i < aTriggers.Length; i++)
     {
-        aTriggers.GetString(i, SZ(szColor));
-        ReplaceString(szBuffer, iLen, szColor, "", true);
+        aTriggers.GetString(i, (bToNullStr || !(i%2)) ? szKey : szColor, STATUS_LENGTH);
+
+        if(!bToNullStr && !(i%2))
+            continue;
+
+        ReplaceString(szBuffer, iSize, szKey, szColor, true);
     }
 }
 
-void GetMessageByPrototype(int iIndex, int iType, int iTeam, bool IsAlive, char[] szName, int NameSize, char[] szMessage, int MsgSize, char[] szBuffer, int iSize)
+void GetMessageByPrototype
+(
+    int iIndex, int iType, int iTeam, bool IsAlive, char[] szName, 
+    int NameSize, char[] szMessage, int MsgSize, char[] szBuffer, int iSize
+)
 {
     static char Other[MESSAGE_LENGTH];
 
@@ -384,7 +394,7 @@ public int Native_ClearAllColors(Handle hPlugin, int iArgs)
     char szBuffer[MESSAGE_LENGTH];
     GetNativeString(1, SZ(szBuffer));
 
-    clProc_ClearColors(SZ(szBuffer));
+    clProc_Replace(SZ(szBuffer), true);
 
     SetNativeString(1, SZ(szBuffer));
 }
@@ -408,7 +418,12 @@ void clProc_RebuildString(int iClient, const char[] szBind, char[] szMessage, in
 {
     static Handle gf;
     if(!gf)
-        gf = CreateGlobalForward("cc_proc_RebuildString", ET_Ignore, Param_Cell, Param_CellByRef, Param_String, Param_String, Param_Cell);
+        gf = CreateGlobalForward(
+            "cc_proc_RebuildString", 
+            ET_Ignore, Param_Cell, 
+            Param_CellByRef, Param_String, 
+            Param_String, Param_Cell
+        );
     
     int plevel;
     Call_StartForward(gf);
