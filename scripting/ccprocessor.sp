@@ -125,13 +125,16 @@ SMCResult OnValueRead(SMCParser smc, const char[] sKey, const char[] sValue, boo
         aPhrases.PushString(sKey);
         aPhrases.PushString(sValue);
     }
-
-    ColorLen = (!strcmp(sKey, "Chat_PrototypeTeam")) ? 0 : 
-                (!strcmp(sKey, "Chat_PrototypeAll")) ? 1 : 
-                (!strcmp(sKey, "Changename_Prototype")) ? 2 : -1;
     
-    if(ColorLen != -1)
-        strcopy(msgPrototype[ColorLen], sizeof(msgPrototype[]), sValue);
+    else
+    {
+        ColorLen =  (!strcmp(sKey, "Chat_PrototypeTeam"))   ? 0 : 
+                    (!strcmp(sKey, "Chat_PrototypeAll"))    ? 1 : 
+                    (!strcmp(sKey, "Changename_Prototype")) ? 2 : -1;
+        
+        if(ColorLen != -1)
+            strcopy(msgPrototype[ColorLen], sizeof(msgPrototype[]), sValue);
+    }
 
     return SMCParse_Continue;
 }
