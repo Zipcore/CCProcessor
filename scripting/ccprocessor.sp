@@ -17,12 +17,16 @@ char
     szConfigPath[MESSAGE_LENGTH],
     msgPrototype[PROTO_COUNT][MESSAGE_LENGTH];
 
+ConVar game_mode;
+
+char mode_default_value[8];
+
 public Plugin myinfo = 
 {
     name        = "CCProcessor",
     author      = "nullent?",
     description = "Color chat processor",
-    version     = "1.5.1",
+    version     = "1.5.2",
     url         = "discord.gg/ChTyPUG"
 };
 
@@ -56,11 +60,23 @@ public void OnPluginStart()
 
     if(!DirExists("/cfg/ccprocessor"))
         CreateDirectory("/cfg/ccprocessor", 0x1ED);
+
+    game_mode = FindConVar("game_mode");
+    game_mode.AddChangeHook(OnModChanged);
+    game_mode.GetString(mode_default_value, sizeof(mode_default_value));
+}
+
+public void OnModChanged(ConVar cvar, const char[] oldVal, const char[] newVal)
+{
+    cvar.GetString(mode_default_value, sizeof(mode_default_value));
 }
 
 public void OnMapStart()
 {
     aTriggers.Clear();
+
+    if(!(game_mode.Flags & FCVAR_REPLICATED))
+        game_mode.Flags |= FCVAR_REPLICATED;
 
     if(!FileExists(szConfigPath))
         SetFailState("Where is my config: %s ???", szConfigPath);
@@ -219,6 +235,8 @@ public Action MsgText_CB(UserMsg msg_id, Handle msg, const int[] players, int pl
     iIndex = (!umType) ? BfReadByte(msg) : PbReadInt(msg, "ent_idx");
     if(IsClientSourceTV(iIndex))
         return Plugin_Continue;
+    
+    game_mode.ReplicateToClient(iIndex, mode_default_value);
 
     if(!umType)
     {        
@@ -257,6 +275,8 @@ public Action MsgText_CB(UserMsg msg_id, Handle msg, const int[] players, int pl
         return Plugin_Handled;
         
     clProc_Replace(SZ(szBuffer), false);
+
+    game_mode.ReplicateToClient(iIndex, "0");
 
     if(umType)
     {
