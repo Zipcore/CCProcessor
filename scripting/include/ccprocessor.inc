@@ -69,6 +69,15 @@ forward void cc_config_parsed();
 */
 forward void cc_proc_MsgBroadType(const int iType);
 
+/*
+ *	Approving the sender's index
+ *	Calls when message is ready to send
+ *
+ *	@param &iClientIndex		Sender's index (<> 0)
+ *
+ * 	@noreturn
+*/
+forward void cc_proc_IndexApproval(int &iClientIndex);
 
 /*
  *	Get a list of values

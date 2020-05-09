@@ -26,7 +26,7 @@ public Plugin myinfo =
     name        = "CCProcessor",
     author      = "nullent?",
     description = "Color chat processor",
-    version     = "1.5.3",
+    version     = "1.6.0",
     url         = "discord.gg/ChTyPUG"
 };
 
@@ -289,6 +289,8 @@ public Action MsgText_CB(UserMsg msg_id, Handle msg, const int[] players, int pl
     if(game_mode)
         game_mode.ReplicateToClient(iIndex, "0");
 
+    Call_IndexApproval(iIndex);
+
     if(umType)
     {
         PbSetInt(msg, "ent_idx", iIndex);
@@ -507,4 +509,19 @@ void clProc_MessageBroadType(const int iType)
     Call_StartForward(gf);
     Call_PushCell(iType);
     Call_Finish();
+}
+
+void Call_IndexApproval(int &iIndex)
+{
+    static Handle gf;
+    if(!gf)
+        gf = CreateGlobalForward("cc_proc_IndexApproval", ET_Ignore, Param_CellByRef);
+    
+    int safe = iIndex;
+    Call_StartForward(gf);
+    Call_PushCellRef(iIndex);
+    Call_Finish();
+
+    if(iIndex < 1)
+        iIndex = safe;
 }
