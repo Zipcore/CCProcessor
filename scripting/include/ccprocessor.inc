@@ -70,6 +70,16 @@ forward void cc_config_parsed();
 forward void cc_proc_MsgBroadType(const int iType);
 
 /*
+ *	Calls when message is build ended
+ *
+ *	@param iClient			Sender's index
+ *	@param szMessage		Built message
+ *
+ * 	@noreturn
+*/
+forward void cc_proc_OnMessageBuilt(int iClient, const char[] szMessage);
+
+/*
  *	Approving the sender's index
  *	Calls when message is ready to send
  *

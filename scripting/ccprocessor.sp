@@ -26,7 +26,7 @@ public Plugin myinfo =
     name        = "CCProcessor",
     author      = "nullent?",
     description = "Color chat processor",
-    version     = "1.6.0",
+    version     = "1.7.0",
     url         = "discord.gg/ChTyPUG"
 };
 
@@ -189,6 +189,8 @@ public Action ServerMsg_CB(UserMsg msg_id, Handle msg, const int[] players, int 
     else if(szBuffer[0] == '#')
         return Plugin_Continue;
 
+    Call_MessageBuilt(0, szBuffer);
+
     clProc_Replace(SZ(szBuffer), false);
     
     Format(SZ(szBuffer), "%c %s", 1, szBuffer);
@@ -283,7 +285,9 @@ public Action MsgText_CB(UserMsg msg_id, Handle msg, const int[] players, int pl
     
     if(!szMessage[0] || !szBuffer[0])
         return Plugin_Handled;
-        
+    
+    Call_MessageBuilt(iIndex, szBuffer);
+
     clProc_Replace(SZ(szBuffer), false);
 
     if(game_mode)
@@ -524,4 +528,16 @@ void Call_IndexApproval(int &iIndex)
 
     if(iIndex < 1)
         iIndex = safe;
+}
+
+void Call_MessageBuilt(int iIndex, const char[] BuiltMessage)
+{
+    static Handle gf;
+    if(!gf)
+        gf = CreateGlobalForward("cc_proc_OnMessageBuilt", ET_Ignore, Param_Cell, Param_String);
+    
+    Call_StartForward(gf);
+    Call_PushCell(iIndex);
+    Call_PushString(BuiltMessage)
+    Call_Finish();
 }
