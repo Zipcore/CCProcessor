@@ -11,7 +11,7 @@ UserMessageType umType;
 ArrayList 
     aTriggers,
     aPhrases,
-    dClient;
+    netMessage;
 
 char 
     szConfigPath[MESSAGE_LENGTH],
@@ -26,7 +26,7 @@ public Plugin myinfo =
     name        = "CCProcessor",
     author      = "nullent?",
     description = "Color chat processor",
-    version     = "1.7.0",
+    version     = "1.7.1",
     url         = "discord.gg/ChTyPUG"
 };
 
@@ -56,7 +56,7 @@ public void OnPluginStart()
 
     aTriggers = new ArrayList(STATUS_LENGTH, 0);
     aPhrases = new ArrayList(TEAM_LENGTH, 0);
-    dClient = new ArrayList(MAX_LENGTH, 0);
+    netMessage = new ArrayList(MAX_LENGTH, 0);
 
     if(!DirExists("/cfg/ccprocessor"))
         CreateDirectory("/cfg/ccprocessor", 0x1ED);
@@ -201,37 +201,38 @@ public Action ServerMsg_CB(UserMsg msg_id, Handle msg, const int[] players, int 
         return Plugin_Continue;
     }
 
-    ArrayList arr = new ArrayList(MESSAGE_LENGTH, 0);
-    arr.Push(Msg_type);
-    arr.PushString(szBuffer);
-    arr.PushArray(players, playersNum);
-    arr.Push(playersNum);
-    RequestFrame(OnFrRequest, arr);
+    netMessage.Push(Msg_type);
+    netMessage.PushString(szBuffer);
+    netMessage.PushArray(players, playersNum);
+    netMessage.Push(playersNum);
+    RequestFrame(OnFrRequest);
     
     return Plugin_Handled;
 }
 
-public void OnFrRequest(any data)
+public void OnFrRequest()
 {
     char szMessage[MESSAGE_LENGTH];
-    view_as<ArrayList>(data).GetString(1, SZ(szMessage));
+    netMessage.GetString(1, SZ(szMessage));
 
-    int[] players = new int[view_as<ArrayList>(data).Get(3)];
-    view_as<ArrayList>(data).GetArray(2, players, view_as<ArrayList>(data).Get(3));
+    int[] players = new int[netMessage.Get(3)];
+    netMessage.GetArray(2, players, netMessage.Get(3));
 
     BfWrite rewriteB = 
     UserMessageToBfWrite(
         StartMessage(
             "TextMsg", players, 
-            view_as<ArrayList>(data).Get(3), 
+            netMessage.Get(3), 
             USERMSG_RELIABLE|USERMSG_BLOCKHOOKS
         )
     );
 
-    rewriteB.WriteByte(view_as<ArrayList>(data).Get(0));
+    rewriteB.WriteByte(netMessage.Get(0));
     rewriteB.WriteString(szMessage);
     rewriteB.WriteString(NULL_STRING);
     EndMessage();
+
+    netMessage.Clear();
 }
 
 public Action MsgText_CB(UserMsg msg_id, Handle msg, const int[] players, int playersNum, bool reliable, bool init)
@@ -303,39 +304,39 @@ public Action MsgText_CB(UserMsg msg_id, Handle msg, const int[] players, int pl
         return Plugin_Continue;
     }
 
-    dClient.Push(iIndex);
-    dClient.PushString(szBuffer);
-    dClient.PushArray(players, playersNum);
-    dClient.Push(playersNum);
+    netMessage.Push(iIndex);
+    netMessage.PushString(szBuffer);
+    netMessage.PushArray(players, playersNum);
+    netMessage.Push(playersNum);
 
     return Plugin_Handled;
 }
 
 public void SayTextComp(UserMsg msgid, bool send)
 {
-    if(send && umType == UM_BitBuf && dClient.Length)
+    if(send && umType == UM_BitBuf && netMessage.Length)
     {
         char szMessage[MAX_LENGTH];
-        dClient.GetString(1, SZ(szMessage));
+        netMessage.GetString(1, SZ(szMessage));
 
-        int[] players = new int[dClient.Get(3)];
-        dClient.GetArray(2, players, dClient.Get(3));
+        int[] players = new int[netMessage.Get(3)];
+        netMessage.GetArray(2, players, netMessage.Get(3));
 
         BfWrite bf = 
         UserMessageToBfWrite(
             StartMessage(
                 "SayText2", players, 
-                dClient.Get(3), 
+                netMessage.Get(3), 
                 USERMSG_RELIABLE|USERMSG_BLOCKHOOKS
             )
         );
 
-        bf.WriteByte(dClient.Get(0));
+        bf.WriteByte(netMessage.Get(0));
         bf.WriteByte(1);
         bf.WriteString(szMessage);
         EndMessage();
 
-        dClient.Clear();
+        netMessage.Clear();
     }
 }
 
