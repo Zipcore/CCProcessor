@@ -26,7 +26,7 @@ public Plugin myinfo =
     name        = "CCProcessor",
     author      = "nullent?",
     description = "Color chat processor",
-    version     = "1.7.1",
+    version     = "1.7.2",
     url         = "discord.gg/ChTyPUG"
 };
 
@@ -248,8 +248,8 @@ public Action MsgText_CB(UserMsg msg_id, Handle msg, const int[] players, int pl
     if(IsClientSourceTV(iIndex))
         return Plugin_Continue;
     
-    if(game_mode)
-        game_mode.ReplicateToClient(iIndex, mode_default_value);
+    /*if(game_mode)
+        game_mode.ReplicateToClient(iIndex, mode_default_value);*/
 
     if(!umType)
     {        
@@ -294,12 +294,17 @@ public Action MsgText_CB(UserMsg msg_id, Handle msg, const int[] players, int pl
     if(game_mode)
         game_mode.ReplicateToClient(iIndex, "0");
 
+    static int iBackupIndex;
+    iBackupIndex = iIndex;
+
     Call_IndexApproval(iIndex);
 
     if(umType)
     {
         PbSetInt(msg, "ent_idx", iIndex);
         PbSetString(msg, "msg_name", szBuffer);
+
+        RequestFrame(BackMode, iBackupIndex);
 
         return Plugin_Continue;
     }
@@ -308,8 +313,17 @@ public Action MsgText_CB(UserMsg msg_id, Handle msg, const int[] players, int pl
     netMessage.PushString(szBuffer);
     netMessage.PushArray(players, playersNum);
     netMessage.Push(playersNum);
+    netMessage.Push(iBackupIndex);
+
+    //RequestFrame(BackMode, iIndex);
 
     return Plugin_Handled;
+}
+
+public void BackMode(any iIndex)
+{
+    if(game_mode)
+        game_mode.ReplicateToClient(iIndex, mode_default_value);
 }
 
 public void SayTextComp(UserMsg msgid, bool send)
@@ -335,6 +349,8 @@ public void SayTextComp(UserMsg msgid, bool send)
         bf.WriteByte(1);
         bf.WriteString(szMessage);
         EndMessage();
+
+        BackMode(netMessage.Get(4));
 
         netMessage.Clear();
     }
