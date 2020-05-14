@@ -26,7 +26,7 @@ public Plugin myinfo =
     name        = "CCProcessor",
     author      = "nullent?",
     description = "Color chat processor",
-    version     = "1.8.0",
+    version     = "1.8.1",
     url         = "discord.gg/ChTyPUG"
 };
 
@@ -253,7 +253,7 @@ public Action SayText2_CallBack(UserMsg msg_id, Handle msg, const int[] players,
     
     else ReadProtoMessage(msg, iIndex, MsgType, SZ(szName), SZ(szMessage));
 
-    if(IsClientSourceTV(iIndex) || IsClientObserver(iIndex))
+    if(IsClientSourceTV(iIndex))
         return Plugin_Continue;
     
     // If a player has added colors into his nickname
