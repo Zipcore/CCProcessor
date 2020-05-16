@@ -8,7 +8,7 @@ public Plugin myinfo =
 	name = "[CCP] Individual Prefix",
 	author = "nullent?",
 	description = "Sets an individual prefix for the player based on the criteria",
-	version = "1.0.2",
+	version = "1.0.3",
 	url = "discord.gg/ChTyPUG"
 };
 
@@ -309,15 +309,25 @@ public int PrefList_CallBack(Menu hMenu, MenuAction action, int iClient, int iOp
     }
 }
 
+int iMsgType;
+
+public void cc_proc_MsgBroadType(const int iType)
+{
+    iMsgType = iType;
+}
+
 public void cc_proc_RebuildString(int iClient, int &plevel, const char[] szBind, char[] szBuffer, int iSize)
 {   
-    if(!StrEqual(szBind, "{PREFIX}") || PLEVEL < plevel || !ClientPrefix[iClient][0])
+    if(iMsgType == eMsg_CNAME)
         return;
 
-    plevel = PLEVEL;
-    FormatEx(
-        szBuffer, iSize, "%s", ClientPrefix[iClient]
-    );
+    if(StrEqual(szBind, "{PREFIX}") && PLEVEL > plevel && ClientPrefix[iClient][0])
+    {
+        plevel = PLEVEL;
+        FormatEx(
+            szBuffer, iSize, "%s", ClientPrefix[iClient]
+        );
+    }
 }
 
 // auth, flag, group

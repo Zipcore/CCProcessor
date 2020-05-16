@@ -35,3 +35,4 @@
 
 .vscode/*
 plugins/*
+scripting/ccprocessor/chatenv.h

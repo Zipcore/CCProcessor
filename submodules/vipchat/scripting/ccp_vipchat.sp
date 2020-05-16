@@ -9,7 +9,7 @@ public Plugin myinfo =
 	name = "[CCP] VIP Chat",
 	author = "nullent?",
 	description = "Chat features for VIP by user R1KO",
-	version = "1.4.1",
+	version = "1.4.2",
 	url = "discord.gg/ChTyPUG"
 };
 
@@ -500,9 +500,16 @@ public Action OnClientSayCommand(int iClient, const char[] command, const char[]
     return Plugin_Continue;
 }
 
+int iMsgType;
+
+public void cc_proc_MsgBroadType(const int iType)
+{
+    iMsgType = iType;
+}
+
 public void cc_proc_RebuildString(int iClient, int &plevel, const char[] szBind, char[] szBuffer, int iSize)
 {
-    if(!VIP_IsClientVIP(iClient))
+    if(iMsgType == eMsg_CNAME || !VIP_IsClientVIP(iClient))
         return;
     
     static int i;

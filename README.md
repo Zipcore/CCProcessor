@@ -25,5 +25,4 @@ This makes it possible to use color tags without third-party modifications of st
 ## Requirements:
 -------------
 - Sourcemod 
-    - Version 1.9 [ [Win](http://sourcemod.net/latest.php?os=windows&version=1.9) | [Linux](http://sourcemod.net/latest.php?os=linux&version=1.9) ]
     - Version 1.10 [ [Win](http://sourcemod.net/latest.php?os=windows&version=1.10) | [Linux](http://sourcemod.net/latest.php?os=linux&version=1.10) ]
