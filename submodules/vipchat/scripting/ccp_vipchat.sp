@@ -9,7 +9,7 @@ public Plugin myinfo =
 	name = "[CCP] VIP Chat",
 	author = "nullent?",
 	description = "Chat features for VIP by user R1KO",
-	version = "1.4.2",
+	version = "1.4.3",
 	url = "discord.gg/ChTyPUG"
 };
 
@@ -521,13 +521,15 @@ public void cc_proc_RebuildString(int iClient, int &plevel, const char[] szBind,
     if(nLevel[i] < plevel)
         return;
 
-    plevel = nLevel[i];
-    cc_clear_allcolors(szBuffer, iSize);
-
     switch(i)
     {
         case E_CPrefix:
         {
+            if(!ClientPrefix[iClient][0])
+                return;
+            
+            plevel = nLevel[i];
+                
             FormatEx(
                 szBuffer, iSize, "%s%s", 
                 (EnvColor[iClient][E_CPrefix][0]) ? EnvColor[iClient][E_CPrefix] : "",
@@ -537,6 +539,12 @@ public void cc_proc_RebuildString(int iClient, int &plevel, const char[] szBind,
 
         default:
         {
+            if(!EnvColor[iClient][i][0])
+                return;
+
+            plevel = nLevel[i];
+            cc_clear_allcolors(szBuffer, iSize);
+
             Format(
                 szBuffer, iSize, "%s%s", 
                 (EnvColor[iClient][i][0]) ? EnvColor[iClient][i] : "",
