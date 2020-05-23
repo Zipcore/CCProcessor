@@ -7,7 +7,7 @@ public Plugin myinfo =
 	name = "[CCP] CCMessage",
 	author = "nullent?",
 	description = "Custom client message",
-	version = "2.0",
+	version = "2.1.0",
 	url = "discord.gg/ChTyPUG"
 };
 
@@ -151,6 +151,10 @@ ClientMessage clMessage[MAXPLAYERS+1];
 
 int PLEVEL[2];
 
+bool
+    IsMenuDisabled,
+    DisableToDef;
+
 public void OnPluginStart()
 {
     LoadTranslations("ccp_customchat.phrases");
@@ -159,6 +163,8 @@ public void OnPluginStart()
 
     CreateConVar("ccm_prefix_priority", "1", "Priority for replacing the prefix", _, true, 0.0).AddChangeHook(ChangePrefixPrior);
     CreateConVar("ccm_name_priority", "1", "Priority for replacing the username", _, true, 0.0).AddChangeHook(ChangeNamePrior);
+    CreateConVar("ccm_disable_todefault", "1", "Set the default value when turning off the template", _, true, 0.0, true, 1.0).AddChangeHook(DisableToDefault);
+    CreateConVar("ccm_disable_menu", "0", "Disable the menu when entering a command", _, true, 0.0, true, 1.0).AddChangeHook(DisableMenu);
     AutoExecConfig(true, "ccp_ccmessage", "ccprocessor");
     
     RegConsoleCmd("sm_prefix", Cmd_Prefix);
@@ -174,10 +180,22 @@ _CVAR_ON_CHANGE(ChangeNamePrior)
     PLEVEL[1] = (cvar != null) ? cvar.IntValue : 1;
 }
 
+_CVAR_ON_CHANGE(DisableToDefault)
+{
+    DisableToDef = (cvar != null) ? cvar.BoolValue : false;
+}
+
+_CVAR_ON_CHANGE(DisableMenu)
+{
+    IsMenuDisabled = (cvar != null) ? cvar.BoolValue : false;
+}
+
 public void OnMapStart()
 {
     _CVAR_INIT_CHANGE(ChangePrefixPrior, "ccm_prefix_priority");
-    _CVAR_INIT_CHANGE(ChangePrefixPrior, "ccm_name_priority");
+    _CVAR_INIT_CHANGE(ChangeNamePrior, "ccm_name_priority");
+    _CVAR_INIT_CHANGE(DisableToDefault, "ccm_disable_todefault");
+    _CVAR_INIT_CHANGE(DisableMenu, "ccm_disable_menu");
 
     char szFullPath[PMP];
     BUILD(szFullPath, PATH);
@@ -210,7 +228,7 @@ SMCResult OnValueRead(SMCParser smc, const char[] sKey, const char[] sValue, boo
 
     if(!strcmp("type", sKey))
     {
-        // LogMessage("Type; %s", sValue);
+        // // LogMessage("Type; %s", sValue);
         EBuffer.m_AType = CharToAccessType(sValue);
         i++;
     }
@@ -263,7 +281,7 @@ SMCResult OnValueRead(SMCParser smc, const char[] sKey, const char[] sValue, boo
     {
         i = 0;
 
-        // LogMessage("I:%i", i);
+        // // LogMessage("I:%i", i);
         if(EBuffer.m_AType != eNone)
             aProtoBase.PushArray(SZ(EBuffer));
     }
@@ -307,9 +325,31 @@ public Action Cmd_Prefix(int iClient, int args)
 {
     if(iClient && IsClientInGame(iClient) && !IsFakeClient(iClient))
     {
-        Menu menu = GetClientPrototypes(iClient);
-        if(menu)
-            menu.Display(iClient, MENU_TIME_FOREVER);
+        if(!IsMenuDisabled)
+        {
+            Menu menu = GetClientPrototypes(iClient);
+            if(menu)
+                menu.Display(iClient, MENU_TIME_FOREVER);
+        }
+        else
+        {
+            switch(clMessage[iClient].GetCurrentAccess())
+            {
+                case eNone:
+                {
+                    if(!DisableToDef) GetClientProto(iClient);
+                }
+
+                case eDefault:
+                {
+                    if(DisableToDef) GetClientProto(iClient);
+                    else clMessage[iClient].m_EMessage.ClearEnv();
+                }
+
+                default:
+                    GetTemplateByAccess(iClient, (DisableToDef) ? eDefault : eNone);
+            }
+        }
     }
     
     return Plugin_Handled;
@@ -331,7 +371,7 @@ Menu GetClientPrototypes(int iClient)
         MessageEnv EBuffer;
 
         FormatEx(SZ(szBuffer), "%t \n \n", "ccp_disable");
-        hMenu.AddItem("r", szBuffer, (!clMessage[iClient].IsEmpty()) ? ITEMDRAW_DEFAULT : ITEMDRAW_DISABLED);
+        hMenu.AddItem("r", szBuffer, (clMessage[iClient].IsEmpty() || (DisableToDef && clMessage[iClient].GetCurrentAccess() == eDefault)) ? ITEMDRAW_DISABLED : ITEMDRAW_DEFAULT);
 
         for(int i; i < aProtoBase.Length; i++)
         {
@@ -358,6 +398,30 @@ Menu GetClientPrototypes(int iClient)
     return hMenu;
 }
 
+void GetTemplateByAccess(int iClient, eAccess AValue)
+{
+    MessageEnv EBuffer;
+
+    if(AValue == eNone)
+    {
+        clMessage[iClient].m_EMessage.ClearEnv();
+        return;
+    }
+        
+    for(int i; i < aProtoBase.Length; i++)
+    {
+        aProtoBase.GetArray(i, EBuffer, sizeof(EBuffer));
+
+        if(EBuffer.m_AType == AValue)
+        {
+            clMessage[iClient].SetMessageProto(EBuffer);
+            return;
+        }
+    }
+
+    EBuffer.ClearEnv();
+}
+
 public int PrefList_CallBack(Menu hMenu, MenuAction action, int iClient, int iOpt2)
 {
     switch(action)
@@ -370,7 +434,9 @@ public int PrefList_CallBack(Menu hMenu, MenuAction action, int iClient, int iOp
             
             if(szOpt[0] == 'r')
             {
-                clMessage[iClient].ClearEnv();
+                if(!DisableToDef) clMessage[iClient].ClearEnv();
+                else GetTemplateByAccess(iClient, eDefault);
+
                 return;
             }
 
