@@ -12,7 +12,7 @@ enum
 };
 
 #define STATUS_LENGTH   16
-#define TEAM_LENGTH     24
+#define TEAM_LENGTH     32
 #define PREFIX_LENGTH   64
 #define NAME_LENGTH     128
 #define MESSAGE_LENGTH  256
