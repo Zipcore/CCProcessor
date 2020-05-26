@@ -26,7 +26,7 @@ public Plugin myinfo =
     name        = "CCProcessor",
     author      = "nullent?",
     description = "Color chat processor",
-    version     = "1.8.1",
+    version     = "1.8.3",
     url         = "discord.gg/ChTyPUG"
 };
 
@@ -77,6 +77,8 @@ public void OnModChanged(ConVar cvar, const char[] oldVal, const char[] newVal)
     cvar.GetString(mode_default_value, sizeof(mode_default_value));
 }
 
+SMCParser smParser;
+
 public void OnMapStart()
 {
     if(!FileExists(szConfigPath))
@@ -84,7 +86,7 @@ public void OnMapStart()
 
     aPalette.Clear();
     
-    SMCParser smParser = new SMCParser();
+    smParser = new SMCParser();
     smParser.OnKeyValue = OnKeyValue;
     smParser.OnEnterSection = OnEnterSection;
     smParser.OnEnd = OnCompReading;
@@ -163,6 +165,8 @@ SMCResult OnKeyValue(SMCParser smc, const char[] sKey, const char[] sValue, bool
 
 public void OnCompReading(SMCParser smc, bool halted, bool failed)
 {
+    delete smParser; 
+
     if(!halted && !failed)
         Call_OnCompReading();
 
@@ -237,13 +241,9 @@ public void SendSrvMsgSafly(any data)
     netMessage.Clear();
 }
 
-static UserMsg SayText2Id;
-
 public Action SayText2_CallBack(UserMsg msg_id, Handle msg, const int[] players, int playersNum, bool reliable, bool init)
 {
-    if(SayText2Id == INVALID_MESSAGE_ID) SayText2Id = msg_id;
-
-    static Protobuf message;
+    Protobuf message;
 
     static int iIndex, MsgType, iBackupIndex;
 
@@ -319,7 +319,7 @@ public void SayTextComp(UserMsg msgid, bool send)
             BfWrite message = 
             view_as<BfWrite>(
                 StartMessageEx(
-                    SayText2Id, players, 
+                    msgid, players, 
                     netMessage.Get(3), 
                     USERMSG_RELIABLE|USERMSG_BLOCKHOOKS
                 )
