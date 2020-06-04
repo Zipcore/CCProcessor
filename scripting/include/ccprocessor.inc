@@ -33,7 +33,7 @@ forward bool cc_proc_SkipColorsInMsg(int iClient);
  *
  *	@param iClient		Client index
  *	@param &pLevel		Replacement priority
- *	@param szBind		Core binds ({NAME}, {PREFIX}, {PROTOTYPE}, {TEAM}, {STATUS}, {MSG})
+ *	@param szBind		Core binds ({PROTOTYPE}, {STATUS}, {TEAM}, {PREFIXCO}, {PREFIX}, {NAMECO}, {NAME}, {MSGCO}, {MSG})
  *	@param szBuffer		Buffer with value
  *	@param iSize		Size of buffer
  *

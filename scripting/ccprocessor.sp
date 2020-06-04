@@ -26,7 +26,7 @@ public Plugin myinfo =
     name        = "CCProcessor",
     author      = "nullent?",
     description = "Color chat processor",
-    version     = "1.8.3",
+    version     = "1.9.0",
     url         = "discord.gg/ChTyPUG"
 };
 
@@ -395,6 +395,9 @@ void ReplaceColors(char[] szBuffer, int iSize, bool bToNullStr)
     }
 }
 
+// Available keys:
+//  {PROTOTYPE}, {STATUS}, {TEAM}, {PREFIXCO}, {PREFIX}, {NAMECO}, {NAME}, {MSGCO}, {MSG}
+
 void GetMessageByPrototype(
     int iIndex, int iType, int iTeam, bool IsAlive, char[] szName, int NameSize, char[] szMessage, int MsgSize, char[] szBuffer, int iSize
 )
@@ -443,6 +446,16 @@ void GetMessageByPrototype(
         ReplaceString(szBuffer, iSize, "{TEAM}", Other, true);
     }
 
+    // This isn't the best solution, but so far everything is in order.... i think.
+    if(StrContains(szBuffer, "{PREFIXCO}") != -1)
+    {
+        Other = "";
+        Call_RebuildString(iIndex, "{PREFIXCO}", SZ(Other));
+
+        BreakPoint(Other, STATUS_LENGTH);        
+        ReplaceString(szBuffer, iSize, "{PREFIXCO}", Other, true);
+    }
+
     if(StrContains(szBuffer, "{PREFIX}") != -1)
     {
         Other = "";
@@ -452,12 +465,30 @@ void GetMessageByPrototype(
         ReplaceString(szBuffer, iSize, "{PREFIX}", Other, true);
     }
 
+    if(StrContains(szBuffer, "{NAMECO}") != -1)
+    {
+        FormatEx(SZ(Other), "%c", 3);
+        Call_RebuildString(iIndex, "{NAMECO}", SZ(Other));
+
+        BreakPoint(Other, STATUS_LENGTH);        
+        ReplaceString(szBuffer, iSize, "{NAMECO}", Other, true);
+    }
+
     if(StrContains(szBuffer, "{NAME}") != -1)
     {
         Call_RebuildString(iIndex, "{NAME}", szName, NameSize);
         ReplaceString(szBuffer, iSize, "{NAME}", szName, true);
     }
-        
+
+    if(StrContains(szBuffer, "{MSGCO}") != -1)
+    {
+        FormatEx(SZ(Other), "%c", 1);
+        Call_RebuildString(iIndex, "{MSGCO}", SZ(Other));
+
+        BreakPoint(Other, STATUS_LENGTH);        
+        ReplaceString(szBuffer, iSize, "{MSGCO}", Other, true);
+    }
+
     if(StrContains(szBuffer, "{MSG}") != -1)
     {
         Call_RebuildString(iIndex, "{MSG}", szMessage, MsgSize);
