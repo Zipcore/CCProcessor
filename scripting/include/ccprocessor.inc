@@ -6,9 +6,12 @@
 // Types of message
 enum
 {
-    eMsg_TEAM = 0,
+	eMsg_TEAM = 0,
 	eMsg_ALL,
-    eMsg_CNAME
+	eMsg_CNAME,
+	eMsg_SERVER,
+	
+	eMsg_MAX
 };
 
 #define STATUS_LENGTH   16
@@ -49,7 +52,7 @@ forward void cc_proc_RebuildString(int iClient, int &pLevel, const char[] szBind
  *
  * 	@return				true - send / false - otherwise
 */
-forward bool cc_proc_OnServerMsg(char[] szMessage, int MsgLen);
+forward bool cc_proc_OnDefMsg(const char[] szMessage);
 
 /*
  *	Calls when the config reading is completed

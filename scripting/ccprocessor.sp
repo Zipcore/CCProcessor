@@ -1,6 +1,5 @@
 #pragma newdecls required
 
-#define PROTO_COUNT     3
 #define SETTINGS_PATH "configs/c_var/%s.ini"
 #define SZ(%0) %0, sizeof(%0)
 
@@ -15,7 +14,7 @@ ArrayList
 
 char 
     szConfigPath[MESSAGE_LENGTH],
-    msgPrototype[PROTO_COUNT][MESSAGE_LENGTH];
+    msgPrototype[eMsg_MAX][MESSAGE_LENGTH];
 
 ConVar game_mode;
 
@@ -26,7 +25,7 @@ public Plugin myinfo =
     name        = "CCProcessor",
     author      = "nullent?",
     description = "Color chat processor",
-    version     = "1.9.0",
+    version     = "2.0.0",
     url         = "discord.gg/ChTyPUG"
 };
 
@@ -152,9 +151,10 @@ SMCResult OnKeyValue(SMCParser smc, const char[] sKey, const char[] sValue, bool
     
     else
     {
-        iBuffer =   (!strcmp(sKey, "Chat_PrototypeTeam"))   ? 0 : 
-                    (!strcmp(sKey, "Chat_PrototypeAll"))    ? 1 : 
-                    (!strcmp(sKey, "Changename_Prototype")) ? 2 : -1;
+        iBuffer =   (!strcmp(sKey, "Chat_PrototypeTeam"))   ? eMsg_TEAM : 
+                    (!strcmp(sKey, "Chat_PrototypeAll"))    ? eMsg_ALL : 
+                    (!strcmp(sKey, "Changename_Prototype")) ? eMsg_CNAME : 
+                    (!strcmp(sKey, "Chat_ServerTemplate"))  ? eMsg_SERVER : -1;
         
         if(iBuffer != -1)
             strcopy(msgPrototype[iBuffer], sizeof(msgPrototype[]), sValue);
@@ -178,23 +178,29 @@ public Action TextMessage_CallBack(UserMsg msg_id, Handle msg, const int[] playe
     if(((!umType) ? BfReadByte(msg) : PbReadInt(msg, "msg_dst")) != 3)
         return Plugin_Continue;
 
-    static char szBuffer[MESSAGE_LENGTH];
+    static char szName[NAME_LENGTH], szMessage[MESSAGE_LENGTH], szBuffer[MAX_LENGTH];
+    szName = NULL_STRING;
+    szMessage = NULL_STRING;
     szBuffer = NULL_STRING;
 
-    if(!umType) BfReadString(msg, SZ(szBuffer));
-    else PbReadString(msg, "params", SZ(szBuffer), 0);
+    if(!umType) BfReadString(msg, SZ(szMessage));
+    else PbReadString(msg, "params", SZ(szMessage), 0);
 
-    if(!Call_OnServerMessage(SZ(szBuffer)) || !szBuffer[0])
+    if(szBuffer[0] == '#')
+        return Call_OnDefMessage(szMessage) ? Plugin_Continue : Plugin_Handled;
+
+    GetMessageByPrototype(
+        0, eMsg_SERVER, 1, false, SZ(szName), SZ(szMessage), SZ(szBuffer)
+    );
+
+    if(!szMessage[0] || !szBuffer[0])
         return Plugin_Handled;
-
-    else if(szBuffer[0] == '#')
-        return Plugin_Continue;
 
     Call_MessageBuilt(0, szBuffer);
 
     ReplaceColors(SZ(szBuffer), false);
     
-    Format(SZ(szBuffer), "%c %s", 1, szBuffer);
+    //Format(SZ(szBuffer), "%c %s", 1, szBuffer);
 
     if(umType)
     {
@@ -259,7 +265,7 @@ public Action SayText2_CallBack(UserMsg msg_id, Handle msg, const int[] players,
     // If a player has added colors into his nickname
     ReplaceColors(SZ(szName), true);
 
-    // if a player has access for this feature
+    // If a player has added colors into his msg
     if(!Call_IsSkipColors(iIndex))
         ReplaceColors(SZ(szMessage), true);
     
@@ -476,6 +482,9 @@ void GetMessageByPrototype(
 
     if(StrContains(szBuffer, "{NAME}") != -1)
     {
+        if(!iIndex && iType == eMsg_SERVER)
+            FormatEx(szName, NameSize, "CONSOLE");
+            
         Call_RebuildString(iIndex, "{NAME}", szName, NameSize);
         ReplaceString(szBuffer, iSize, "{NAME}", szName, true);
     }
@@ -547,16 +556,15 @@ void Call_RebuildString(int iClient, const char[] szBind, char[] szMessage, int 
     Call_Finish();
 }
 
-bool Call_OnServerMessage(char[] szMessage, int iSize)
+bool Call_OnDefMessage(const char[] szMessage)
 {
     static GlobalForward gf;
     if(!gf)
-        gf = new GlobalForward("cc_proc_OnServerMsg", ET_Hook, Param_String, Param_Cell);
+        gf = new GlobalForward("cc_proc_OnDefMsg", ET_Hook, Param_String);
     
     bool Send = true;
     Call_StartForward(gf);
-    Call_PushStringEx(szMessage, iSize, SM_PARAM_STRING_UTF8|SM_PARAM_STRING_COPY, SM_PARAM_COPYBACK);
-    Call_PushCell(iSize);
+    Call_PushString(szMessage);
     Call_Finish(Send);
 
     return Send;
