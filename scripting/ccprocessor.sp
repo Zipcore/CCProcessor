@@ -9,7 +9,6 @@ UserMessageType umType;
 
 ArrayList 
     aPalette,
-    aPhrases,
     netMessage;
 
 char 
@@ -25,7 +24,7 @@ public Plugin myinfo =
     name        = "CCProcessor",
     author      = "nullent?",
     description = "Color chat processor",
-    version     = "2.0.0",
+    version     = "2.1.0",
     url         = "discord.gg/ChTyPUG"
 };
 
@@ -36,7 +35,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
     HookUserMessage(GetUserMessageId("TextMsg"), TextMessage_CallBack, true);
     HookUserMessage(GetUserMessageId("SayText2"), SayText2_CallBack, true, SayTextComp);
 
-    CreateNative("cc_drop_list", Native_DropTriggers);
+    CreateNative("cc_drop_palette", Native_DropPalette);
     CreateNative("cc_clear_allcolors", Native_ClearAllColors);
 
     RegPluginLibrary("ccprocessor");
@@ -53,8 +52,7 @@ public void OnPluginStart()
 
     LoadTranslations("ccproc.phrases");
 
-    aPalette = new ArrayList(STATUS_LENGTH, 0);
-    aPhrases = new ArrayList(TEAM_LENGTH, 0);
+    aPalette = new ArrayList(PREFIX_LENGTH, 0);
     netMessage = new ArrayList(MAX_LENGTH, 0);
 
     if(!DirExists("/cfg/ccprocessor"))
@@ -89,6 +87,7 @@ public void OnMapStart()
     smParser.OnKeyValue = OnKeyValue;
     smParser.OnEnterSection = OnEnterSection;
     smParser.OnEnd = OnCompReading;
+    smParser.OnLeaveSection = OnLeave;
 
     int iLine;
     if(smParser.ParseFile(szConfigPath, iLine) != SMCError_Okay)
@@ -105,9 +104,18 @@ int Section;
 
 SMCResult OnEnterSection(SMCParser smc, const char[] name, bool opt_quotes)
 {
-    Section = 
-        (!strcmp(name, "Triggers")) ? 1 : 
-        (!strcmp(name, "Phrases")) ? 2 : 0;
+    // main ++ > 1 Palette ++ > 2 Key
+    if(Section > 1)
+        aPalette.PushString(name);
+
+    Section++;
+
+    return SMCParse_Continue;
+}
+
+SMCResult OnLeave(SMCParser smc)
+{
+    Section--;
 
     return SMCParse_Continue;
 }
@@ -117,38 +125,30 @@ SMCResult OnKeyValue(SMCParser smc, const char[] sKey, const char[] sValue, bool
     if(!sKey[0] || !sValue[0])
         return SMCParse_Continue;
 
-    static int iBuffer;
-    static char szBuffer[STATUS_LENGTH];
+    int iBuffer;
 
-    if(Section == 1)
+    if(!strcmp(sKey, "value"))
     {
-        aPalette.PushString(sKey);
+        char szExplode[2][PREFIX_LENGTH];
+        ExplodeString(sValue, ";", SZ(szExplode), sizeof(szExplode[]));
 
-        iBuffer = strlen(sValue);
+        iBuffer = strlen(szExplode[0]);
 
         switch(iBuffer)
         {
             // Defined ASCII colors
-            case 1, 2: FormatEx(SZ(szBuffer), "%c", StringToInt(sValue));
+            case 1, 2: Format(szExplode[0], sizeof(szExplode[]), "%c", StringToInt(szExplode[0]));
 
             // Colors based RGB/RGBA into HEX format: #RRGGBB/#RRGGBBAA
-            case 7, 9: FormatEx(SZ(szBuffer), "%c%s", (iBuffer == 7) ? 7 : 8, sValue[1]);
+            case 7, 9: FormatEx(szExplode[0], sizeof(szExplode[]), "%c%s", (iBuffer == 7) ? 7 : 8, szExplode[0][1]);
 
-            default: LogError("Invalid color length '%i' for value: %s", iBuffer, sValue);
-        }                
+            default: LogError("Invalid color length for value: %s", szExplode[0]);
+        }
 
-        aPalette.PushString(szBuffer);
+        aPalette.PushString(szExplode[0]);
+        aPalette.PushString(szExplode[1]);
     }
 
-    else if(Section == 2)
-    {
-        if(aPalette.FindString(sKey) == -1)
-            return SMCParse_Continue;
-
-        aPhrases.PushString(sKey);
-        aPhrases.PushString(sValue);
-    }
-    
     else
     {
         iBuffer =   (!strcmp(sKey, "Chat_PrototypeTeam"))   ? eMsg_TEAM : 
@@ -390,8 +390,17 @@ void ReplaceColors(char[] szBuffer, int iSize, bool bToNullStr)
     szColor = "";
     szKey   = "";
 
+    int a;
+
+    // aPalette:> Key:Value:Transl
     for(int i; i < aPalette.Length; i++)
     {
+        if(++a == 3)
+        {
+            a = 0;
+            continue;
+        }
+
         aPalette.GetString(i, (bToNullStr || !(i%2)) ? szKey : szColor, STATUS_LENGTH);
 
         if(!bToNullStr && !(i%2))
@@ -523,9 +532,9 @@ public int Native_ClearAllColors(Handle hPlugin, int iArgs)
     SetNativeString(1, SZ(szBuffer));
 }
 
-public int Native_DropTriggers(Handle hPlugins, int iArgs)
+public int Native_DropPalette(Handle hPlugins, int iArgs)
 {
-    return view_as<int>(GetNativeCell(1) == 1 ? aPalette.Clone() : aPhrases.Clone());
+    return view_as<int>(aPalette.Clone());
 }
 
 void Call_OnCompReading()

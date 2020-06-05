@@ -54,97 +54,97 @@
         "en"                "{R}•"
     }
 
-    "Color_white"
+    "color_white"
     {
         "ru"                "{W}Белый"
         "en"                "{W}White"
     }
 
-    "Color_red"
+    "color_red"
     {
         "ru"                "{R}Красный"
         "en"                "{R}Red"
     }
 
-    "Color_team"
+    "color_team"
     {
         "ru"                "{T}Командный"
         "en"                "{T}Team"
     }
 
-    "Color_green"
+    "color_green"
     {
         "ru"                "{G}Зеленый"
         "en"                "{G}Green"
     }
 
-    "Color_pistachio"
+    "color_pistachio"
     {
         "ru"                "{P}Фисташшковый"
         "en"                "{P}Pistachio"
     }
 
-    "Color_lgreen"
+    "color_lgreen"
     {
         "ru"                "{LG}Светло-зеленый"
         "en"                "{LG}Light green"
     }
 
-    "Color_scarlet"
+    "color_scarlet"
     {
         "ru"                "{S}Алый"
         "en"                "{S}Scarlet"
     }
 
-    "Color_grey"
+    "color_grey"
     {
         "ru"                "{GR}Серый"
         "en"                "{GR}Grey"
     }
 
-    "Color_banana"
+    "color_banana"
     {
         "ru"                "{BA}Банановый"
         "en"                "{BA}Banana"
     }
 
-    "Color_dgrey"
+    "color_dgrey"
     {
         "ru"                "{DG}Песочно-серый"
         "en"                "{DG}Dusty-grey"
     }
 
-    "Color_cyan"
+    "color_cyan"
     {
         "ru"                "{C}Голубой"
         "en"                "{C}Cyan"
     }
 
-    "Color_blue"
+    "color_blue"
     {
         "ru"                "{B}Синий"
         "en"                "{B}Blue"
     }
 
-    "Color_violet"
+    "color_violet"
     {
         "ru"                "{V}Фиалковый"
         "en"                "{V}Violet"
     }
 
-    "Color_pink"
+    "color_pink"
     {
         "ru"                "{PI}Розовый"
         "en"                "{PI}Pink"
     }
 
-    "Color_coralline"
+    "color_coralline"
     {
         "ru"                "{CO}Коралловый"
         "en"                "{CO}Сoralline"
     }
 
-    "Color_gold"
+    "color_gold"
     {
         "ru"                "{GO}Золотой"
         "en"                "{GO}Gold"

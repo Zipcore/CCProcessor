@@ -93,13 +93,13 @@ forward void cc_proc_OnMessageBuilt(int iClient, const char[] szMessage);
 forward void cc_proc_IndexApproval(int &iClientIndex);
 
 /*
- *	Get a list of values
+ *	Get a pallete
  *
- *	@param IsTriggers	true - Key:color / false - Key:translation key
+ *	@noparam
  *
- * 	@return				List
+ * 	@return				List:> Key:Value:Transl
 */
-native ArrayList cc_drop_list(bool IsTriggers);
+native ArrayList cc_drop_palette();
 
 
 /*
@@ -126,7 +126,7 @@ public SharedPlugin __pl_ccprocessor=
 #if !defined REQUIRE_PLUGIN
 public void __pl_ccprocessor_SetNTVOptional()
 {
-	MarkNativeAsOptional("cc_drop_list");
+	MarkNativeAsOptional("cc_drop_palette");
 	MarkNativeAsOptional("cc_clear_allcolors");
 }
 #endif
