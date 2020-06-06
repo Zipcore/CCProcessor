@@ -22,7 +22,7 @@ public Plugin myinfo =
 	name = "[CCP] Split color tag",
 	author = "nullent?",
 	description = "Split several colors in one tag",
-	version = "1.0",
+	version = "1.1.0",
 	url = "discord.gg/ChTyPUG"
 };
 
@@ -37,11 +37,11 @@ public void cc_config_parsed()
 {
     aTeamSplit.Clear();
 
-    ArrayList buffer = cc_drop_list(true);
+    ArrayList buffer = cc_drop_palette();
 
     char szColor[STATUS_LENGTH];
 
-    for(int i = 1; i < buffer.Length; i+=2)
+    for(int i = 1; i < buffer.Length; i+=3)
     {
         buffer.GetString(i, szColor, sizeof(szColor));
         if(szColor[0] != '3' || strlen(szColor) > 1)
