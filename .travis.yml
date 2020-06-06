@@ -25,7 +25,6 @@ before_script:
 
     - cd include
     - cp ../../../../scripting/include/* .
-    - cp ../../../../submodules/vipchat/scripting/include/* .
     - cd ../../../..
 
 script:
