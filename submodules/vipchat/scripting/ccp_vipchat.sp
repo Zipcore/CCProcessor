@@ -1,3 +1,5 @@
+#include UTF-8-string
+
 #pragma newdecls required
 
 #include vip_core
@@ -9,7 +11,7 @@ public Plugin myinfo =
 	name = "[CCP] VIP Chat",
 	author = "nullent?",
 	description = "Chat features for VIP by user R1KO",
-	version = "1.4.3",
+	version = "1.5.0",
 	url = "discord.gg/ChTyPUG"
 };
 
@@ -23,8 +25,31 @@ public Plugin myinfo =
 #define PMP PLATFORM_MAX_PATH
 #define MPL MAXPLAYERS+1
 
-ArrayList aTriggers;
-ArrayList aPhrases;
+enum
+{
+    E_CPrefix = 0,
+    E_CName,
+    E_CMessage,
+    E_Prefix,
+
+    E_MAX
+};
+
+ArrayList aPalette;
+
+int nLevel[E_MAX];
+
+char ccl_current_feature[MPL][20];
+
+bool bCustom[MPL];
+
+Handle coFeatures[E_MAX];
+
+bool blate;
+
+ArrayList aFeatureList;
+
+static const char g_szFeatures[][] = {"vip_prefix_color", "vip_name_color", "vip_message_color", "vip_prefix"};
 
 
 /* Env:
@@ -33,38 +58,185 @@ ArrayList aPhrases;
     2 - Message
 */
 
-enum
+enum struct TemplatePart
 {
-    E_CPrefix = 0,
-    E_CName,
-    E_CMessage,
-    E_Prefix
-};
+    // Color value or prefix key
+    // char m_szValue[PREFIX_LENGTH];
 
-int nLevel[3];
+    // translation key will be interpreted in the client env.
+    char m_szTranslationKey[PREFIX_LENGTH];
 
-char EnvColor[MPL][3][STATUS_LENGTH];
-char ClientPrefix[MPL][PREFIX_LENGTH];
+    char m_szVIPGroup[PREFIX_LENGTH];
 
-char ccl_current_feature[MPL][20];
+    char m_szFeature[PREFIX_LENGTH];
 
-bool bCustom[MPL];
+    char GetKey()
+    {
+        return this.m_szTranslationKey;
+    }
 
-ArrayList aBuffer;
-Handle coFeatures[4];
+    void SetKey(const char[] szKey)
+    {
+        strcopy(this.m_szTranslationKey, strlen(szKey) + 1, szKey);
+    }
 
-bool blate;
+    bool IsPartEmpty()
+    {
+        return !this.m_szTranslationKey[0];
+    }
 
-int Section;
+    char GetGroup()
+    {
+        return this.m_szVIPGroup;
+    }
 
-bool ColoredPrefix[MPL];
+    void SetGroup(const char[] szGroup)
+    {
+        strcopy(this.m_szTranslationKey, strlen(szGroup) + 1, szGroup);
+    }
 
-ArrayList aGroups;
-ArrayList aFeature;
+    char GetFeature()
+    {
+        return this.m_szFeature;
+    }
 
-static const char szFeatures[][] = {"vip_prefix_color", "vip_name_color", "vip_message_color", "vip_prefix"};
+    void SetFeature(const char[] szFeature)
+    {
+        strcopy(this.m_szTranslationKey, strlen(szFeature) + 1, szFeature);
+    }
 
-static const char szCVars[][] = {"vip_prefix_pririty", "vip_name_priority", "vip_message_priority"};
+    bool IsValidPart()
+    {
+        return !this.IsPartEmpty() && this.m_szFeature[0] && this.m_szVIPGroup[0];
+    }
+
+    bool IsEqualGroup(const char[] szGroup)
+    {
+        return UTF8StrEqual(szGroup, this.m_szVIPGroup);
+    }
+
+    int GetFeatureNum()
+    {
+        int i = -1;
+        while(i++ < sizeof(g_szFeatures)-1)
+            if(StrEqual(g_szFeatures[i], this.GetFeature()))
+                return i;
+            
+        return i = -1;
+    }
+    
+    void ResetPart()
+    {
+        this.m_szTranslationKey[0] = 0;
+        this.m_szVIPGroup[0] = 0;
+        this.m_szFeature[0] = 0;
+    }
+}
+
+enum struct ClientTemplate
+{
+    TemplatePart m_tpCPrefix;
+    TemplatePart m_tpLPrefix;
+    TemplatePart m_tpCName;
+    TemplatePart m_tpCMessage;
+
+    TemplatePart m_tpBuffer;
+
+    char m_szVIPGroup[PREFIX_LENGTH];
+
+    void WorkWith(const char[] szFeature)
+    {
+        this.WorkWithExt(FeatureNum(szFeature));
+    }
+
+    void WorkWithExt(int iFeature)
+    {
+        switch(iFeature)
+        {
+            case E_CPrefix: this.m_tpBuffer = this.m_tpCPrefix;
+            case E_Prefix: this.m_tpBuffer = this.m_tpLPrefix;
+            case E_CName: this.m_tpBuffer = this.m_tpCName;
+            case E_CMessage: this.m_tpBuffer = this.m_tpCMessage;
+
+            default: this.m_tpBuffer.ResetPart();
+        }
+    }
+
+    void WriteValue(const char[] szKey)
+    {
+        this.m_tpBuffer.SetKey(szKey);
+    }
+
+    void WriteGroup()
+    {
+        this.m_tpBuffer.SetGroup(this.m_szVIPGroup);
+    }
+
+    void WriteFeature(const char[] szFeature)
+    {
+        this.m_tpBuffer.SetFeature(szFeature);
+    }
+
+    bool IsInvalidKey()
+    {
+        return this.m_tpBuffer.IsPartEmpty();
+    }
+
+    void WritePart(TemplatePart template)
+    {
+        this.m_tpBuffer = template;
+    }
+
+    void TransToValue(bool IsPrefix)
+    {
+        if(IsPrefix)
+            Format(this.m_tpBuffer.m_szTranslationKey, PREFIX_LENGTH, "%t", this.m_tpBuffer.m_szTranslationKey);
+        
+        else aPalette.GetString(aPalette.FindString(this.m_tpBuffer.m_szTranslationKey)+1, this.m_tpBuffer.m_szTranslationKey, PREFIX_LENGTH);
+    }
+
+    void EndWork(const char[] szFeature)
+    {
+        switch(FeatureNum(szFeature))
+        {
+            case E_CPrefix: this.m_tpCPrefix = this.m_tpBuffer;
+            case E_Prefix: this.m_tpLPrefix = this.m_tpBuffer;
+            case E_CName: this.m_tpCName = this.m_tpBuffer;
+            case E_CMessage: this.m_tpCMessage = this.m_tpBuffer;
+
+            default: this.m_tpBuffer.ResetPart();
+        }
+    }
+
+    void ResetTemplate()
+    {
+        this.m_tpCPrefix.ResetPart();
+        this.m_tpLPrefix.ResetPart();
+        this.m_tpCName.ResetPart();
+        this.m_tpCMessage.ResetPart();
+    }
+
+    char GetGroup()
+    {
+        return this.m_szVIPGroup;
+    }
+
+    char SetGroup(const char[] szValue)
+    {
+        strcopy(this.m_szVIPGroup, strlen(szValue) + 1, szValue);
+    }
+}
+
+ClientTemplate tempClient[MAXPLAYERS+1];
+
+
+// static const char szCVars[][] = {"vip_prefix_pririty", "vip_name_priority", "vip_message_priority"};
+
+#define CPREFIX_PRIO    "vip_cprefix_priority"
+#define LPREFIX_PRIO    "vip_lprefix_priority"
+#define CNAME_PRIO      "vip_cname_priority"
+#define CMESSAGE_PRIO   "vip_cmessage_priority"
+
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
@@ -78,28 +250,50 @@ public void OnPluginStart()
     LoadTranslations("vip_ccpchat.phrases");
     LoadTranslations("vip_modules.phrases");
 
-    aBuffer = new ArrayList(128, 0);
-    aTriggers = new ArrayList(1);
-    aPhrases = new ArrayList(1);
+    aFeatureList = new ArrayList(MESSAGE_LENGTH, 0);
 
-    CreateConVar(szCVars[E_CPrefix], "2", "The priority level to change the color of the prefix", _, true, 0.0).AddChangeHook(OnChangedPPrefix);
-    CreateConVar(szCVars[E_CName], "2", "The priority level to change the color of the username", _, true, 0.0).AddChangeHook(OnChangedPName);
-    CreateConVar(szCVars[E_CMessage], "2", "The priority level to change the color of the usermessage", _, true, 0.0).AddChangeHook(OnChangedPMessage);
+    CreateConVar(CPREFIX_PRIO, "2", "The priority level to change the color of the prefix", _, true, 0.0).AddChangeHook(ChangeCPrefix);
+    CreateConVar(LPREFIX_PRIO, "2", "The priority level to change the value of prefix", _, true, 0.0).AddChangeHook(ChangeLPrefix);
+    CreateConVar(CNAME_PRIO, "2", "The priority level to change the color of the username", _, true, 0.0).AddChangeHook(ChangeCName);
+    CreateConVar(CMESSAGE_PRIO, "2", "The priority level to change the color of the usermessage", _, true, 0.0).AddChangeHook(ChangeCMessage);
 
     AutoExecConfig(true, "vip_chat", "ccprocessor");
 
     if(VIP_IsVIPLoaded())
         VIP_OnVIPLoaded(); 
 
-    for(int i; i < sizeof(szFeatures); i++)
-        coFeatures[i] = RegClientCookie(szFeatures[i], szFeatures[i], CookieAccess_Private);
+    for(int i; i < sizeof(g_szFeatures); i++)
+        coFeatures[i] = RegClientCookie(g_szFeatures[i], g_szFeatures[i], CookieAccess_Private);
 }
+
+_CVAR_ON_CHANGE(ChangeCPrefix)
+{
+    nLevel[E_CPrefix] = cvar.IntValue;
+}
+
+_CVAR_ON_CHANGE(ChangeLPrefix)
+{
+    nLevel[E_Prefix] = cvar.IntValue;
+}
+
+_CVAR_ON_CHANGE(ChangeCName)
+{
+    nLevel[E_CName] = cvar.IntValue;
+}
+
+_CVAR_ON_CHANGE(ChangeCMessage)
+{
+    nLevel[E_CMessage] = cvar.IntValue;
+}
+
+SMCParser smParser;
 
 public void OnMapStart()
 {
-    _CVAR_INIT_CHANGE(OnChangedPPrefix, szCVars[E_CPrefix]);
-    _CVAR_INIT_CHANGE(OnChangedPName, szCVars[E_CName]);
-    _CVAR_INIT_CHANGE(OnChangedPMessage, szCVars[E_CMessage]);
+    _CVAR_INIT_CHANGE(ChangeCPrefix,    CPREFIX_PRIO);
+    _CVAR_INIT_CHANGE(ChangeLPrefix,    LPREFIX_PRIO);
+    _CVAR_INIT_CHANGE(ChangeCName,      CNAME_PRIO);
+    _CVAR_INIT_CHANGE(ChangeCMessage,   CMESSAGE_PRIO);
 
     char path[PMP];
     BUILD(path, _CONFIG_PATH);
@@ -107,69 +301,34 @@ public void OnMapStart()
     if(!FileExists(path))
         SetFailState("Where is my config: %s ???", path);
 
-    aBuffer.Clear();
+    aFeatureList.Clear();
 
-    SMCParser smParser = new SMCParser();
+    smParser = new SMCParser();
     smParser.OnKeyValue = OnValueRead;
     smParser.OnEnterSection = OnSection;
     smParser.OnLeaveSection = OnLeave;
     smParser.OnEnd = OnParseEnded;
 
     int iLine;
-
     if(smParser.ParseFile(path, iLine) != SMCError_Okay)
-        LogError("Error On parse: %s | Line: %i", path, iLine);
+        LogError("Failed on line: %i", iLine);
 }
 
-_CVAR_ON_CHANGE(OnChangedPPrefix)
-{
-    if(cvar)
-        nLevel[E_CPrefix] = cvar.IntValue;
-}
+int Section;
 
-_CVAR_ON_CHANGE(OnChangedPName)
-{
-    if(cvar)
-        nLevel[E_CName] = cvar.IntValue;
-}
-
-_CVAR_ON_CHANGE(OnChangedPMessage)
-{
-    if(cvar)
-        nLevel[E_CMessage] = cvar.IntValue;
-}
+ArrayList aGroups;
 
 SMCResult OnSection(SMCParser smc, const char[] name, bool opt_quotes)
 {
-    if(!strcmp(name, "chat_settings"))
+    if(FeatureNum(name) != -1)
     {
-        Section = 0;
-
-        aFeature = new ArrayList(128, 0);
-        aGroups = new ArrayList(128, 0);
+        aFeatureList.PushString(name);
+        
+        if(!aGroups)
+            aGroups = new ArrayList(128, 0);
     }
         
-    else if(!strcmp(name, szFeatures[E_CPrefix]) || !strcmp(name, szFeatures[E_CName]) || !strcmp(name, szFeatures[E_CMessage]) || !strcmp(name, szFeatures[E_Prefix]))
-    {
-        if(aBuffer.FindString(name) != -1)
-        {
-            LogError("Duplicate found for feature: %s", name);
-            return SMCParse_Continue;
-        }
-        
-        aFeature.Clear();
-        aBuffer.PushString(name);
-
-        Section = 1;
-    }
-
-    else
-    {
-        aFeature.PushString(name);
-        aGroups.Clear();
-
-        Section = 2;
-    }
+    Section++;
 
     return SMCParse_Continue;
 }
@@ -177,10 +336,9 @@ SMCResult OnSection(SMCParser smc, const char[] name, bool opt_quotes)
 SMCResult OnLeave(SMCParser smc)
 {
     if(Section == 2)
-        aFeature.Push(aGroups.Clone());
-    
-    else if(Section == 1)
-        aBuffer.Push(aFeature.Clone());
+        aFeatureList.Push(aGroups.Clone());
+
+    aGroups.Clear();
 
     Section--;
 
@@ -191,40 +349,64 @@ SMCResult OnValueRead(SMCParser smc, const char[] sKey, const char[] sValue, boo
 {
     if(!sKey[0] || !sValue[0])
         return SMCParse_Continue;
+    
+    TemplatePart templatePart;
 
-    aGroups.PushString(sValue);
+    aGroups.PushString(sKey);
+
+    ArrayList aValues = new ArrayList(sizeof(templatePart), 0);
+
+    char szBuffer[1024];
+    strcopy(SZ(szBuffer), sValue);
+
+    int i = -1, a;
+    while(szBuffer[(++i)] != 0)
+    {
+        if(szBuffer[i] == ';' || szBuffer[i+1] == 0)
+        {
+            templatePart.m_szTranslationKey[a] = 0;
+
+            aValues.PushArray(SZ(templatePart));
+
+            templatePart.m_szTranslationKey = NULL_STRING;
+
+            a = 0;
+
+            continue;
+        }
+
+        templatePart.m_szTranslationKey[a] = szBuffer[i];
+        a++;
+    }
+
+    templatePart.ResetPart();
+
+    aGroups.Push(aValues.Clone());
+
+    delete aValues;
 
     return SMCParse_Continue;
 }
 
 public void OnParseEnded(SMCParser smc, bool halted, bool failed)
 {
-    if(halted || failed)
-        SetFailState("Errors detected while reading the config file");
-
-    delete aFeature;
     delete aGroups;
 
-    if(blate) 
-    {
+    if(blate)
         cc_config_parsed();
-        blate = false;
-    }
 }
 
 public void cc_config_parsed()
 {
-    delete aTriggers;
-    delete aPhrases;
+    DeleteSafly(aPalette);
 
-    aTriggers = cc_drop_list(true);
-    aPhrases = cc_drop_list(false);
+    aPalette = cc_drop_palette();
 }
 
 public void VIP_OnVIPLoaded()
 {
-    for(int i; i < sizeof(szFeatures); i++)
-        VIP_RegisterFeature(szFeatures[i], INT, SELECTABLE, OnSelected_Feature, OnDisplay_Feature, OnFeatureDraw);
+    for(int i; i < sizeof(g_szFeatures); i++)
+        VIP_RegisterFeature(g_szFeatures[i], INT, SELECTABLE, OnSelected_Feature, OnDisplay_Feature);
 }
 
 public void OnPluginEnd()
@@ -232,12 +414,14 @@ public void OnPluginEnd()
     if(!CanTestFeatures() || GetFeatureStatus(FeatureType_Native, "VIP_UnregisterFeature") != FeatureStatus_Available)
         return;
     
-    for(int i; i < sizeof(szFeatures); i++)
-        VIP_UnregisterFeature(szFeatures[i]);
+    for(int i; i < sizeof(g_szFeatures); i++)
+        VIP_UnregisterFeature(g_szFeatures[i]);
 }
 
 public bool OnSelected_Feature(int iClient, const char[] szFeature)
 {
+    bCustom[iClient] = false;
+
     Menu hMenu = FeatureMenu(iClient, szFeature);
     if(hMenu)   
         hMenu.Display(iClient, MENU_TIME_FOREVER);
@@ -245,34 +429,32 @@ public bool OnSelected_Feature(int iClient, const char[] szFeature)
     return false;
 }
 
-public int OnFeatureDraw(int iClient, const char[] szFeature, int iStyle)
+// Now prefix color is object
+
+/*public int OnFeatureDraw(int iClient, const char[] szFeature, int iStyle)
 {
-    if(!strcmp(szFeature, szFeatures[E_CPrefix]) && (!ClientPrefix[iClient][0] || ColoredPrefix[iClient]))
-        return ITEMDRAW_DISABLED;
+    if(!strcmp(szFeature, g_szFeatures[E_CPrefix]))
+    {
+        if(tempClient.m_tpLPrefix.IsPartEmpty() || ColoredPrefix[iClient])
+            return ITEMDRAW_DISABLED;
+    }
 
     return iStyle;
-}
+}*/
 
 public bool OnDisplay_Feature(int iClient, const char[] szFeature, char[] szDisplay, int iMaxLength)
 {
     SetGlobalTransTarget(iClient);
 
-    char szFValue[PREFIX_LENGTH];
+    char szFValue[MESSAGE_LENGTH];
+    tempClient[iClient].WorkWith(szFeature);
 
-    if(!strcmp(szFeature, szFeatures[E_Prefix]))
-        strcopy(SZ(szFValue), ClientPrefix[iClient]);
-    
-    else
+    strcopy(SZ(szFValue), tempClient[iClient].m_tpBuffer.GetKey());
+
+    if(strcmp(szFeature, g_szFeatures[E_Prefix]))
     {
-        strcopy(SZ(szFValue), EnvColor[iClient][GetFeaturePos(szFeature)]);
-
-        if(szFValue[0] && aTriggers && aPhrases)
-        {
-            aTriggers.GetString(aTriggers.FindString(szFValue) - 1, SZ(szFValue));
-            aPhrases.GetString(aPhrases.FindString(szFValue) + 1, SZ(szFValue));
-
-            Format(SZ(szFValue), "%t", szFValue);
-        }
+        aPalette.GetString(aPalette.FindString(szFValue)+1, SZ(szFValue));
+        Format(SZ(szFValue), "%t", szFValue);
     }
 
     cc_clear_allcolors(SZ(szFValue));
@@ -288,103 +470,129 @@ public bool OnDisplay_Feature(int iClient, const char[] szFeature, char[] szDisp
 
 public void OnClientPutInServer(int iClient)
 {
-    for(int i; i < sizeof(szFeatures) -1; i++)
-        EnvColor[iClient][i][0] = 0;
-    
-    ClientPrefix[iClient][0] = 0;
-    ColoredPrefix[iClient] = false;
+    tempClient[iClient].ResetTemplate();
+    tempClient[iClient].SetGroup(NULL_STRING);
 }
 
 public void VIP_OnVIPClientLoaded(int iClient)
 {
-    for(int i; i < sizeof(szFeatures) -1; i++)
-        if(VIP_IsClientFeatureUse(iClient, szFeatures[i]))
-            GetClientCookie(iClient, coFeatures[i], EnvColor[iClient][i], sizeof(EnvColor[][]));
-    
-    if(VIP_IsClientFeatureUse(iClient, szFeatures[E_Prefix]))
-    {
-        ColoredPrefix[iClient] = VIP_GetClientFeatureInt(iClient, szFeatures[E_Prefix]) == 2;
-        GetClientCookie(iClient, coFeatures[E_Prefix], ClientPrefix[iClient], sizeof(ClientPrefix[]));
-    }
+    VIP_GetClientVIPGroup(iClient, tempClient[iClient].m_szVIPGroup, sizeof(tempClient[].m_szVIPGroup));
 
-    if(ColoredPrefix[iClient])
+    for(int i; i < sizeof(g_szFeatures); i++)
+        if(VIP_IsClientFeatureUse(iClient, g_szFeatures[i]))
+            GetValueFromCookie(iClient, coFeatures[i], g_szFeatures[i]);
+}
+
+void GetValueFromCookie(int iClient, Handle coHandle, const char[] szFeature)
+{
+    if(coHandle && coHandle != INVALID_HANDLE)
     {
-        /*if(VIP_IsClientFeatureUse(iClient, szFeatures[E_CPrefix]))
-            VIP_RemoveClientFeature(iClient, szFeatures[E_CPrefix]);*/
+        SetGlobalTransTarget(iClient);
+
+        TemplatePart templatePart;
+
+        char szBuffer[MESSAGE_LENGTH];
+        GetClientCookie(iClient, coHandle, SZ(szBuffer));
+
+        tempClient[iClient].WorkWith(szFeature);
+        tempClient[iClient].WriteValue(szBuffer);
+        tempClient[iClient].WriteGroup();
+        tempClient[iClient].WriteFeature(szFeature);
         
-        EnvColor[iClient][E_CPrefix][0] = 0;
-    }  
+        if(tempClient[iClient].IsInvalidKey())
+        {
+            tempClient[iClient].m_tpBuffer.ResetPart();
+            return;
+        }
+        
+        ArrayList aValues = GetGroupList(GetFeatureList(szFeature), tempClient[iClient].m_szVIPGroup);
+
+        bool bFind;
+
+        for(int i; i < aValues.Length; i++)
+        {
+            aValues.GetArray(i, SZ(templatePart));
+
+            // FormatEx(szBuffer, sizeof(szBuffer), "%t", templatePart.m_szTranslationKey);
+
+            if(!StrEqual(szFeature, g_szFeatures[E_Prefix]))
+            {
+                aPalette.GetString(aPalette.FindString(templatePart.m_szTranslationKey)+1, SZ(szBuffer));
+            }
+
+            else FormatEx(szBuffer, sizeof(szBuffer), "%t", templatePart.m_szTranslationKey);
+
+            if(!UTF8StrEqual(tempClient[iClient].m_tpBuffer.m_szTranslationKey, szBuffer, false))
+            {
+                templatePart.ResetPart();
+                continue;
+            }
+
+            tempClient[iClient].WritePart(templatePart);
+            tempClient[iClient].TransToValue(StrEqual(szFeature, g_szFeatures[E_Prefix]));
+
+            bFind = true;
+
+            break;
+        }
+
+        if(bFind || FindTransKey(aValues, "custom") != -1)
+        {
+            tempClient[iClient].EndWork(szFeature);
+            return;
+        }
+
+        else tempClient[iClient].m_tpBuffer.ResetPart();
+    }
 }
 
 Menu FeatureMenu(int iClient, const char[] szFeature)
 {
     Menu hMenu;
-    char szGroup[128];
     char szBuffer[PMP];
-    char szOpt[64];
-    ArrayList arr;
-    int iPos[2];
+    char szOpt[8];
+    ArrayList aValues;
+    TemplatePart templatePart;
 
     SetGlobalTransTarget(iClient);
 
     strcopy(ccl_current_feature[iClient], sizeof(ccl_current_feature[]), szFeature);
-    VIP_GetClientVIPGroup(iClient, SZ(szGroup));
     
-    /*
-        Array > Feature:Array
-            Array > Group:Array
-                Array > Strings
-    */
-
-    if((iPos[0] = aBuffer.FindString(szFeature)) == -1)
-    {
-        LogError("Could not find feature: %s", szFeature);
-        return hMenu;
-    }
-        
-    if((iPos[1] = view_as<ArrayList>(aBuffer.Get(iPos[0]+1)).FindString(szGroup)) == -1)
-    {
-        LogError("Could not find group: %s", szGroup);
-        return hMenu;
-    }
-        
-    if(!(arr = view_as<ArrayList>(aBuffer.Get(iPos[0] + 1)).Get(iPos[1] + 1)))
-    {
-        LogError("An array of group items is not valid");
-        return hMenu;
-    }
+    aValues = GetGroupList(GetFeatureList(szFeature), tempClient[iClient].m_szVIPGroup);
         
     hMenu = new Menu(FeatureMenu_CallBack);
 
     FormatEx(SZ(szBuffer), "%s_title", szFeature);
     hMenu.SetTitle("%t \n \n", szBuffer);
 
-    FormatEx(SZ(szBuffer), "%t \n \n", "disable_this");
-    hMenu.AddItem("disable", szBuffer);
+    tempClient[iClient].WorkWith(szFeature);
 
-    if(arr.FindString("custom") != -1)
+    FormatEx(SZ(szBuffer), "%t \n \n", "disable_this");
+    hMenu.AddItem("disable", szBuffer, (tempClient[iClient].IsInvalidKey()) ? ITEMDRAW_DISABLED : ITEMDRAW_DEFAULT);
+
+    if(FindTransKey(aValues, "custom") != -1)
     {
-        FormatEx(SZ(szBuffer), "%t \n \n", "custom_value");
+        FormatEx(SZ(szBuffer), "%t \n \n", "custom");
         hMenu.AddItem("custom", szBuffer);
     }
 
-    for(int i; i < arr.Length; i++)
+    for(int i; i < aValues.Length; i++)
     {
-        arr.GetString(i, SZ(szOpt));
-        if(!szOpt[0] || !strcmp(szOpt, "custom"))
-            continue;
+        aValues.GetArray(i, SZ(templatePart));
 
-        if(!StrEqual(szFeature, szFeatures[E_Prefix]))
+        if(StrEqual(templatePart.m_szTranslationKey, "custom"))
         {
-            if((iPos[0] = aPhrases.FindString(szOpt)) == -1)
-                continue;
-            
-            aPhrases.GetString(iPos[0] + 1, SZ(szBuffer));
+            templatePart.ResetPart();
+            continue;
         }
 
-        else strcopy(SZ(szBuffer), szOpt);
-
+        if(StrEqual(szFeature, g_szFeatures[E_Prefix]))
+            aPalette.GetString(aPalette.FindString(templatePart.m_szTranslationKey)+2, SZ(szBuffer));
+        
         Format(SZ(szBuffer), "%t", szBuffer);
+        
+        IntToString(i, SZ(szOpt));
+
         cc_clear_allcolors(SZ(szBuffer));
             
         hMenu.AddItem(szOpt, szBuffer);
@@ -400,10 +608,10 @@ public int FeatureMenu_CallBack(Menu hMenu, MenuAction action, int iClient, int 
         case MenuAction_End: delete hMenu;
         case MenuAction_Select:
         {
-            char szOpt2[128];
+            char szOpt2[8];
             hMenu.GetItem(iOpt2, SZ(szOpt2));
 
-            if(!strcmp(szOpt2, "custom"))
+            if(szOpt2[0] == 'c')
             {
                 bCustom[iClient] = true;
 
@@ -412,54 +620,27 @@ public int FeatureMenu_CallBack(Menu hMenu, MenuAction action, int iClient, int 
                 return;
             }
 
-            else if(!strcmp(szOpt2, "disable"))
+            TemplatePart templatePart;
+            tempClient[iClient].WorkWith(ccl_current_feature[iClient]);
+
+            tempClient[iClient].WritePart(templatePart);
+
+            if(szOpt2[0] != 'd')
             {
-                UpdateValueByFeature(iClient, ccl_current_feature[iClient], NULL_STRING);
-                VIP_SendClientVIPMenu(iClient, true);
-                return;
+                ArrayList aValues = GetGroupList(GetFeatureList(ccl_current_feature[iClient]), tempClient[iClient].m_szVIPGroup);
+                aValues.GetArray(StringToInt(szOpt2), SZ(templatePart));
+
+                tempClient[iClient].WritePart(templatePart);
+                tempClient[iClient].TransToValue(StrEqual(ccl_current_feature[iClient], g_szFeatures[E_Prefix]));
             }
 
-            SetGlobalTransTarget(iClient);
-            if(StrEqual(ccl_current_feature[iClient], szFeatures[E_Prefix]))
-                Format(SZ(szOpt2), "%t", szOpt2);
+            SetClientCookie(iClient, coFeatures[FeatureNum(ccl_current_feature[iClient])], tempClient[iClient].m_tpBuffer.m_szTranslationKey);
 
-            else aTriggers.GetString(aTriggers.FindString(szOpt2) + 1, SZ(szOpt2));        
+            tempClient[iClient].EndWork(ccl_current_feature[iClient]);
 
-            UpdateValueByFeature(iClient, ccl_current_feature[iClient], szOpt2);
+            VIP_SendClientVIPMenu(iClient, true);
         }
     }
-}
-
-void UpdateValueByFeature(int iClient, const char[] szFeature, const char[] szValue)
-{
-    if(StrEqual(szFeature, szFeatures[E_Prefix]))
-    {
-        strcopy(ClientPrefix[iClient], sizeof(ClientPrefix[]), szValue);
-
-        if(!ColoredPrefix[iClient])
-            cc_clear_allcolors(ClientPrefix[iClient], sizeof(ClientPrefix[]));
-    }
-        
-    else strcopy(EnvColor[iClient][GetFeaturePos(szFeature)], sizeof(EnvColor[][]), szValue);
-
-
-    if(!strcmp(szFeature, szFeatures[E_Prefix]) && !ClientPrefix[iClient][0])
-    {
-        EnvColor[iClient][E_CPrefix][0] = 0;
-        SetClientCookie(iClient, coFeatures[E_CPrefix], NULL_STRING);
-    }
-
-    SetClientCookie(
-        iClient, 
-        (!StrEqual(szFeature, szFeatures[E_Prefix])) 
-        ? coFeatures[GetFeaturePos(szFeature)] 
-        : coFeatures[E_Prefix], 
-        szValue
-    );
-
-    PrintToChat(iClient, "%t", "ccp_vip_valueupdated");
-
-    VIP_SendClientVIPMenu(iClient, true);
 }
 
 public Action OnClientSayCommand(int iClient, const char[] command, const char[] args)
@@ -469,31 +650,31 @@ public Action OnClientSayCommand(int iClient, const char[] command, const char[]
 
     if(bCustom[iClient])
     {
-        char szBuffer[128];
+        char szBuffer[PREFIX_LENGTH];
 
-        if(!StrEqual(ccl_current_feature[iClient], szFeatures[E_Prefix]))
+        tempClient[iClient].WorkWith(ccl_current_feature[iClient]);
+        tempClient[iClient].WriteGroup();
+        tempClient[iClient].WriteFeature(ccl_current_feature[iClient]);
+
+        if(!StrEqual(ccl_current_feature[iClient], g_szFeatures[E_Prefix]))
         {
             int iPos;
-            if((iPos = aTriggers.FindString(args)) == -1)
+            if((iPos = aPalette.FindString(args)) == -1)
             {
                 PrintToChat(iClient, "%t", "ccp_invalid_colorkey");
                 return Plugin_Handled;
             }
 
-            aTriggers.GetString(iPos+1, SZ(szBuffer));
+            aPalette.GetString(iPos+1, SZ(szBuffer));
         }
 
-        else 
-        {
-            strcopy(SZ(szBuffer), args);
-
-            if(!ColoredPrefix[iClient])
-                cc_clear_allcolors(SZ(szBuffer));
-        }
+        else strcopy(SZ(szBuffer), args);
         
+        tempClient[iClient].WriteValue(szBuffer);
+        tempClient[iClient].EndWork(ccl_current_feature[iClient]);
+
         bCustom[iClient] = false;
 
-        UpdateValueByFeature(iClient, ccl_current_feature[iClient], szBuffer);
         return Plugin_Handled;
     }
 
@@ -509,11 +690,11 @@ public void cc_proc_MsgBroadType(const int iType)
 
 public void cc_proc_RebuildString(int iClient, int &plevel, const char[] szBind, char[] szBuffer, int iSize)
 {
-    if(iMsgType == eMsg_CNAME || !VIP_IsClientVIP(iClient))
+    if(iMsgType > eMsg_ALL || !VIP_IsClientVIP(iClient))
         return;
     
     static int i;
-    i = (!strcmp(szBind, "{NAME}")) ? E_CName : (!strcmp(szBind, "{PREFIX}")) ? E_CPrefix : (!strcmp(szBind, "{MSG}")) ? E_CMessage : -1;
+    i = (!strcmp(szBind, "{NAMECO}")) ? E_CName : (!strcmp(szBind, "{PREFIX}")) ? E_Prefix : (!strcmp(szBind, "{MSGCO}")) ? E_CMessage : (!strcmp(szBind, "{PREFIXCO}")) ? E_CPrefix : -1;
 
     if(i == -1)
         return;
@@ -521,44 +702,68 @@ public void cc_proc_RebuildString(int iClient, int &plevel, const char[] szBind,
     if(nLevel[i] < plevel)
         return;
 
-    switch(i)
-    {
-        case E_CPrefix:
-        {
-            if(!ClientPrefix[iClient][0])
-                return;
-            
-            plevel = nLevel[i];
+    tempClient[iClient].WorkWithExt(i);
+    if(tempClient[iClient].IsInvalidKey())
+        return;
+    
+    plevel = nLevel[i];
                 
-            FormatEx(
-                szBuffer, iSize, "%s%s", 
-                (EnvColor[iClient][E_CPrefix][0]) ? EnvColor[iClient][E_CPrefix] : "",
-                (ClientPrefix[iClient][0]) ? ClientPrefix[iClient] : ""
-            );
-        }
+    FormatEx(szBuffer, iSize, "%s", tempClient[iClient].m_tpBuffer.GetKey());
 
-        default:
-        {
-            if(!EnvColor[iClient][i][0])
-                return;
-
-            plevel = nLevel[i];
-            cc_clear_allcolors(szBuffer, iSize);
-
-            Format(
-                szBuffer, iSize, "%s%s", 
-                (EnvColor[iClient][i][0]) ? EnvColor[iClient][i] : "",
-                szBuffer
-            );
-        }
-    }
+    tempClient[iClient].m_tpBuffer.ResetPart();
 }
 
-int GetFeaturePos(const char[] szFeature)
+void DeleteSafly(Handle &hValue)
 {
-    for(int i; i < sizeof(szFeatures) - 1; i++)
-        if(StrEqual(szFeature, szFeatures[i]))
-            return i;
+    // if we use `delete` on an already invalid descriptor, we will get an exception
+
+    /*
+        `delete` is equivalent to:
+
+        if(handle != null)
+            handle.Close()
+        
+        handle = null;
+    */
+
+    if(hValue == INVALID_HANDLE)
+        hValue = null;
     
-    return 0;
+    delete hValue;
+}
+
+int FeatureNum(const char[] szFeature)
+{
+    for(int i; i < sizeof(g_szFeatures); i++)
+        if(StrEqual(szFeature, g_szFeatures[i]))
+            return i;
+
+    return -1;
+}
+
+ArrayList GetFeatureList(const char[] szFeature)
+{
+    return view_as<ArrayList>(aFeatureList.Get(aFeatureList.FindString(szFeature)+1));
+}
+
+ArrayList GetGroupList(ArrayList inputList, const char[] szGroup)
+{
+    return view_as<ArrayList>(inputList.Get(inputList.FindString(szGroup)+1));
+}
+
+int FindTransKey(ArrayList inputList, const char[] key)
+{
+    TemplatePart templatePart;
+
+    for(int i; i < inputList.Length; i++)
+    {
+        aFeatureList.GetArray(i, SZ(templatePart));
+
+        if(StrEqual(templatePart.m_szTranslationKey, key))
+            return i;
+        
+        templatePart.ResetPart();
+    }
+
+    return -1;
 }

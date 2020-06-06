@@ -1,24 +1,24 @@
 "Phrases"
 {
-    "Prefix_lol"
+    "p_lol"
     {
         "ru"            "[LOL]"
         "en"            "[LOL]"
     }
 
-    "Prefix_kek"
+    "p_kek"
     {
         "ru"            "[KEK]"
         "en"            "[KEK]"
     }
 
-    "Prefix_cheburek"
+    "p_cheb"
     {
         "ru"            "[CHEBUREK]"
         "en"            "[CHEBUREK]"
     }
 
-    "Prefix_alpha"
+    "p_alpha"
     {
         "ru"            "{R}[{G}A{B}L{P}P{LG}H{BA}A{S}]"
         "en"            "{R}[{G}A{B}L{P}P{LG}H{BA}A{S}]"
@@ -60,7 +60,7 @@
         "en"            "Disable"
     }
 
-    "custom_value"
+    "custom"
     {
         "ru"            "Ввести свой"
         "en"            "Enter custom value"
