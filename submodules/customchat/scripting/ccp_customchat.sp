@@ -7,7 +7,7 @@ public Plugin myinfo =
 	name = "[CCP] CCMessage",
 	author = "nullent?",
 	description = "Custom client message",
-	version = "2.1.0",
+	version = "2.2.0",
 	url = "discord.gg/ChTyPUG"
 };
 
@@ -30,6 +30,16 @@ enum eAccess
     eGroup
 };
 
+enum
+{
+    CPREFIX = 0,
+    VPREFIX,
+    CNAME,
+    CMESSAGE,
+
+    CMAX
+};
+
 enum struct MessageEnv
 {
     eAccess m_AType;
@@ -37,6 +47,7 @@ enum struct MessageEnv
     char m_szCPrefix[STATUS_LENGTH];
     char m_szPrefix[PREFIX_LENGTH];
     char m_szCName[STATUS_LENGTH];
+    char m_szCMessage[STATUS_LENGTH];
 
     char m_szAccess[64];
 
@@ -73,6 +84,7 @@ enum struct MessageEnv
         this.m_szPrefix[0] = 0;
         this.m_szCName[0] = 0;
         this.m_szAccess[0] = 0;
+        this.m_szCMessage[0] = 0;
     }
 }
 
@@ -83,27 +95,24 @@ enum struct ClientMessage
     AdminId m_aId;
     int m_iFlags;
 
-    char m_szAuth[32];
+    char m_szAuth[64];
 
-    bool IsColorUse(bool IsUsername)
+    bool IsUse(int iPart)
     {
-        return (IsUsername) ? this.m_EMessage.m_szCName[0] : this.m_EMessage.m_szCPrefix[0];
+        return  (iPart == CPREFIX)  ?   this.m_EMessage.m_szCPrefix[0]  :
+                (iPart == VPREFIX)  ?   this.m_EMessage.m_szPrefix[0]   :  
+                (iPart == CNAME)    ?   this.m_EMessage.m_szCName[0]    :
+                                        this.m_EMessage.m_szCMessage[0] ;
     }
 
-    bool IsPrefixUse()
+    char GetValue(int iPart)
     {
-        return this.m_EMessage.m_szPrefix[0];
+        return  (iPart == CPREFIX)  ?   this.m_EMessage.m_szCPrefix :
+                (iPart == VPREFIX)  ?   this.m_EMessage.m_szPrefix  :
+                (iPart == CNAME)    ?   this.m_EMessage.m_szCName   :
+                                        this.m_EMessage.m_szCMessage;
     }
 
-    char GetPrefix()
-    {
-        return this.m_EMessage.m_szPrefix;
-    }
-
-    char GetColor(bool IsUsername)
-    {
-        return (IsUsername) ? this.m_EMessage.m_szCName : this.m_EMessage.m_szCPrefix;
-    }
 
     void SetMessageProto(MessageEnv newProto)
     {
@@ -135,6 +144,7 @@ enum struct ClientMessage
             StrEqual(this.m_EMessage.m_szCPrefix, MessageProto.m_szCPrefix) &&
             StrEqual(this.m_EMessage.m_szPrefix, MessageProto.m_szPrefix) &&
             StrEqual(this.m_EMessage.m_szCName, MessageProto.m_szCName) &&
+            StrEqual(this.m_EMessage.m_szCMessage, MessageProto.m_szCMessage) &&
             StrEqual(this.m_EMessage.m_szAccess, MessageProto.m_szAccess)
         );
     }
@@ -149,7 +159,7 @@ ArrayList aProtoBase;
 
 ClientMessage clMessage[MAXPLAYERS+1];
 
-int PLEVEL[2];
+int PLEVEL[CMAX];
 
 bool
     IsMenuDisabled,
@@ -162,7 +172,10 @@ public void OnPluginStart()
     aProtoBase = new ArrayList(MAX_NAME_LENGTH, 0);
 
     CreateConVar("ccm_prefix_priority", "1", "Priority for replacing the prefix", _, true, 0.0).AddChangeHook(ChangePrefixPrior);
-    CreateConVar("ccm_name_priority", "1", "Priority for replacing the username", _, true, 0.0).AddChangeHook(ChangeNamePrior);
+    CreateConVar("ccm_cname_priority", "1", "Priority for replacing the username color", _, true, 0.0).AddChangeHook(ChangeCNamePrior);
+    CreateConVar("ccm_cprefix_priority", "1", "Priority for replacing the prefix color", _, true, 0.0).AddChangeHook(ChangeCPrefixPrior);
+    CreateConVar("ccm_cmessage_priority", "1", "Priority for replacing the message color", _, true, 0.0).AddChangeHook(ChangeCMessagePrior);
+
     CreateConVar("ccm_disable_todefault", "1", "Set the default value when turning off the template", _, true, 0.0, true, 1.0).AddChangeHook(DisableToDefault);
     CreateConVar("ccm_disable_menu", "0", "Disable the menu when entering a command", _, true, 0.0, true, 1.0).AddChangeHook(DisableMenu);
     AutoExecConfig(true, "ccp_ccmessage", "ccprocessor");
@@ -172,28 +185,41 @@ public void OnPluginStart()
 
 _CVAR_ON_CHANGE(ChangePrefixPrior)
 {
-    PLEVEL[0] = (cvar != null) ? cvar.IntValue : 1;
+    PLEVEL[VPREFIX] = cvar.IntValue;
 }
 
-_CVAR_ON_CHANGE(ChangeNamePrior)
+_CVAR_ON_CHANGE(ChangeCNamePrior)
 {
-    PLEVEL[1] = (cvar != null) ? cvar.IntValue : 1;
+    PLEVEL[CNAME] = cvar.IntValue;
+}
+
+_CVAR_ON_CHANGE(ChangeCPrefixPrior)
+{
+    PLEVEL[CPREFIX] = cvar.IntValue;
+}
+
+_CVAR_ON_CHANGE(ChangeCMessagePrior)
+{
+    PLEVEL[CMESSAGE] = cvar.IntValue;
 }
 
 _CVAR_ON_CHANGE(DisableToDefault)
 {
-    DisableToDef = (cvar != null) ? cvar.BoolValue : false;
+    DisableToDef = cvar.BoolValue;
 }
 
 _CVAR_ON_CHANGE(DisableMenu)
 {
-    IsMenuDisabled = (cvar != null) ? cvar.BoolValue : false;
+    IsMenuDisabled = cvar.BoolValue;
 }
 
 public void OnMapStart()
 {
     _CVAR_INIT_CHANGE(ChangePrefixPrior, "ccm_prefix_priority");
-    _CVAR_INIT_CHANGE(ChangeNamePrior, "ccm_name_priority");
+    _CVAR_INIT_CHANGE(ChangeCNamePrior, "ccm_cname_priority");
+    _CVAR_INIT_CHANGE(ChangeCPrefixPrior, "ccm_cprefix_priority");
+    _CVAR_INIT_CHANGE(ChangeCMessagePrior, "ccm_cmessage_priority");
+
     _CVAR_INIT_CHANGE(DisableToDefault, "ccm_disable_todefault");
     _CVAR_INIT_CHANGE(DisableMenu, "ccm_disable_menu");
 
@@ -277,7 +303,18 @@ SMCResult OnValueRead(SMCParser smc, const char[] sKey, const char[] sValue, boo
         i++;
     }
 
-    if(i == 5)
+    else if(!strcmp("color_message", sKey))
+    {
+        // LogMessage("color_username; %s", sValue);
+        strcopy(EBuffer.m_szCMessage, sizeof(EBuffer.m_szCMessage), sValue);
+
+        if(!strcmp(EBuffer.m_szCMessage, "NULL", false))
+            EBuffer.m_szCMessage[0] = 0;
+
+        i++;
+    }
+
+    if(i == 6)
     {
         i = 0;
 
@@ -454,26 +491,22 @@ public void cc_proc_MsgBroadType(const int typeMsg)
 
 public void cc_proc_RebuildString(int iClient, int &pLevel, const char[] szBind, char[] szBuffer, int iSize)
 {
-    if(iType == eMsg_CNAME)
+    if(!iClient || iType > eMsg_ALL || clMessage[iClient].IsEmpty())
         return;
+    
+    static int i;
+    i = (!strcmp(szBind, "{NAMECO}")) ? CNAME : (!strcmp(szBind, "{PREFIX}")) ? VPREFIX : (!strcmp(szBind, "{MSGCO}")) ? CMESSAGE : (!strcmp(szBind, "{PREFIXCO}")) ? CPREFIX : -1;
 
-    if(StrEqual(szBind, "{PREFIX}") && PLEVEL[0] > pLevel && clMessage[iClient].IsPrefixUse())
-    {
-        pLevel = PLEVEL[0];
-
-        FormatEx(szBuffer, iSize, "%s", clMessage[iClient].GetPrefix());
-
-        if(clMessage[iClient].IsColorUse(false))
-            Format(szBuffer, iSize, "%s%s", clMessage[iClient].GetColor(false), szBuffer);
-    }
-
-    else if(StrEqual(szBind, "{NAME}") && PLEVEL[1] > pLevel && clMessage[iClient].IsColorUse(true))
-    {
-        pLevel = PLEVEL[1];
-
-        cc_clear_allcolors(szBuffer, iSize);
-        Format(szBuffer, iSize, "%s%s", clMessage[iClient].GetColor(true), szBuffer);
-    }
+    if(i == -1)
+        return;
+    
+    if(PLEVEL[i] < pLevel)
+        return;
+    
+    if(!clMessage[iClient].IsUse(i))
+        return;
+    
+    FormatEx(szBuffer, iSize, "%s", clMessage[iClient].GetValue(i));
 }
 
 
