@@ -24,7 +24,7 @@ public Plugin myinfo =
     name        = "CCProcessor",
     author      = "nullent?",
     description = "Color chat processor",
-    version     = "2.1.0",
+    version     = "2.1.1",
     url         = "discord.gg/ChTyPUG"
 };
 
@@ -401,10 +401,15 @@ void ReplaceColors(char[] szBuffer, int iSize, bool bToNullStr)
             continue;
         }
 
-        aPalette.GetString(i, (bToNullStr || !(i%2)) ? szKey : szColor, STATUS_LENGTH);
+        if(a%2 == 1 || bToNullStr)
+        {
+            aPalette.GetString(i, SZ(szKey));
 
-        if(!bToNullStr && !(i%2))
-            continue;
+            if(!bToNullStr)
+                continue;
+        }
+            
+        if(!bToNullStr) aPalette.GetString(i, SZ(szColor));
 
         ReplaceString(szBuffer, iSize, szKey, szColor, true);
     }
