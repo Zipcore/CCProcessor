@@ -24,7 +24,7 @@ public Plugin myinfo =
     name        = "CCProcessor",
     author      = "nullent?",
     description = "Color chat processor",
-    version     = "2.1.1",
+    version     = "2.1.2",
     url         = "discord.gg/ChTyPUG"
 };
 
@@ -186,7 +186,7 @@ public Action TextMessage_CallBack(UserMsg msg_id, Handle msg, const int[] playe
     if(!umType) BfReadString(msg, SZ(szMessage));
     else PbReadString(msg, "params", SZ(szMessage), 0);
 
-    if(szBuffer[0] == '#')
+    if(szMessage[0] == '#')
         return Call_OnDefMessage(szMessage) ? Plugin_Continue : Plugin_Handled;
 
     GetMessageByPrototype(
