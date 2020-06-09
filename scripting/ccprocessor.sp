@@ -1,6 +1,6 @@
 #pragma newdecls required
 
-#define SETTINGS_PATH "configs/c_var/%s.ini"
+
 #define SZ(%0) %0, sizeof(%0)
 
 #include ccprocessor
@@ -12,7 +12,6 @@ ArrayList
     netMessage;
 
 char 
-    szConfigPath[MESSAGE_LENGTH],
     msgPrototype[eMsg_MAX][MESSAGE_LENGTH];
 
 ConVar game_mode;
@@ -24,7 +23,7 @@ public Plugin myinfo =
     name        = "CCProcessor",
     author      = "nullent?",
     description = "Color chat processor",
-    version     = "2.1.2",
+    version     = "2.2.0",
     url         = "discord.gg/ChTyPUG"
 };
 
@@ -45,12 +44,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 public void OnPluginStart()
 {
-    GetGameFolderName(SZ(szConfigPath));
-    Format(SZ(szConfigPath), SETTINGS_PATH, szConfigPath);
-
-    BuildPath(Path_SM, SZ(szConfigPath), szConfigPath);
-
     LoadTranslations("ccproc.phrases");
+    LoadTranslations("ccp_defmessage.phrases");
 
     aPalette = new ArrayList(PREFIX_LENGTH, 0);
     netMessage = new ArrayList(MAX_LENGTH, 0);
@@ -78,8 +73,20 @@ SMCParser smParser;
 
 public void OnMapStart()
 {
-    if(!FileExists(szConfigPath))
-        SetFailState("Where is my config: %s ???", szConfigPath);
+#define SETTINGS_PATH "configs/c_var/%s.ini"
+
+    static char szConfig[MESSAGE_LENGTH];
+
+    if(!szConfig[0])
+    {
+        GetGameFolderName(SZ(szConfig));
+        Format(SZ(szConfig), SETTINGS_PATH, szConfig);
+
+        BuildPath(Path_SM, SZ(szConfig), szConfig);
+    }
+
+    if(!FileExists(szConfig))
+        SetFailState("Where is my config: %s ???", szConfig);
 
     aPalette.Clear();
     
@@ -90,7 +97,7 @@ public void OnMapStart()
     smParser.OnLeaveSection = OnLeave;
 
     int iLine;
-    if(smParser.ParseFile(szConfigPath, iLine) != SMCError_Okay)
+    if(smParser.ParseFile(szConfig, iLine) != SMCError_Okay)
         LogError("An error was detected on line '%i' while reading", iLine);
 }
 
@@ -187,8 +194,17 @@ public Action TextMessage_CallBack(UserMsg msg_id, Handle msg, const int[] playe
     else PbReadString(msg, "params", SZ(szMessage), 0);
 
     if(szMessage[0] == '#')
-        return Call_OnDefMessage(szMessage) ? Plugin_Continue : Plugin_Handled;
+    {
+        bool SendDMessage = Call_OnDefMessage(szMessage);
 
+        SetGlobalTransTarget(LANG_SERVER);
+
+        if(!TranslationPhraseExists(szMessage) || !IsTranslatedForLanguage(szMessage, LANG_SERVER) || !umType)
+            return SendDMessage ? Plugin_Continue : Plugin_Handled;
+
+        PrepareDefMessage(SZ(szMessage));
+    }
+        
     GetMessageByPrototype(
         0, eMsg_SERVER, 1, false, SZ(szName), SZ(szMessage), SZ(szBuffer)
     );
@@ -356,6 +372,19 @@ void ReadProtoMessage(Handle msg, int &iSender, int &iMsgType, char[] szSenderNa
 
     message.ReadString("params", szSenderName, sn_size, 0);
     message.ReadString("params", szSenderMsg, sm_size, 1);
+}
+
+void PrepareDefMessage(char[] szMessage, int size)
+{
+    char szNum[8];
+
+    Format(szMessage, size, "%t", szMessage);
+
+    for(int i = 1; i <= 4; i++)
+    {
+        FormatEx(szNum, sizeof(szNum), "{%i}", i);
+        ReplaceString(szMessage, size, szNum, (i == 1) ? "%s1" : (i == 2) ? "%s2" : (i == 3) ? "%s3" : "%s4");
+    }
 }
 
 void ReadBfMessage(Handle msg, int &iSender, int &iMsgType, char[] szSenderName, int sn_size, char[] szSenderMsg, int sm_size)
