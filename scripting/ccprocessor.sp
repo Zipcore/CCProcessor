@@ -194,7 +194,7 @@ public Action TextMessage_CallBack(UserMsg msg_id, Handle msg, const int[] playe
 
     if(szMessage[0] == '#')
     {
-        Action defMessage = Call_OnDefMessage(szMessage, TranslationPhraseExists(szMessage), IsTranslatedForLanguage(szMessage, LANG_SERVER));
+        Action defMessage = Call_OnDefMessage(szMessage, TranslationPhraseExists(szMessage), IsTranslatedForLanguage(szMessage, GetServerLanguage()));
 
         if(defMessage == Plugin_Changed)
             PrepareDefMessage(SZ(szMessage));
