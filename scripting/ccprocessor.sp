@@ -55,7 +55,7 @@ public void OnPluginStart()
     game_mode = FindConVar("game_mode");
     if(!game_mode)
     {
-        LogError("Could not find handle for 'game_mode' cvar");
+        LogMessage("Could not find handle for 'game_mode' cvar");
         return;
     }
 
