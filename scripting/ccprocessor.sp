@@ -1,6 +1,5 @@
 #pragma newdecls required
 
-
 #define SZ(%0) %0, sizeof(%0)
 
 #include ccprocessor
@@ -23,7 +22,7 @@ public Plugin myinfo =
     name        = "CCProcessor",
     author      = "nullent?",
     description = "Color chat processor",
-    version     = "2.2.0",
+    version     = "2.2.1",
     url         = "discord.gg/ChTyPUG"
 };
 
@@ -195,14 +194,12 @@ public Action TextMessage_CallBack(UserMsg msg_id, Handle msg, const int[] playe
 
     if(szMessage[0] == '#')
     {
-        bool SendDMessage = Call_OnDefMessage(szMessage);
+        Action defMessage = Call_OnDefMessage(szMessage, TranslationPhraseExists(szMessage), IsTranslatedForLanguage(szMessage, LANG_SERVER));
 
-        SetGlobalTransTarget(LANG_SERVER);
-
-        if(!TranslationPhraseExists(szMessage) || !IsTranslatedForLanguage(szMessage, LANG_SERVER) || !umType)
-            return SendDMessage ? Plugin_Continue : Plugin_Handled;
-
-        PrepareDefMessage(SZ(szMessage));
+        if(defMessage == Plugin_Changed && umType)
+            PrepareDefMessage(SZ(szMessage));
+        
+        else return defMessage;
     }
         
     GetMessageByPrototype(
@@ -599,15 +596,19 @@ void Call_RebuildString(int iClient, const char[] szBind, char[] szMessage, int 
     Call_Finish();
 }
 
-bool Call_OnDefMessage(const char[] szMessage)
+Action Call_OnDefMessage(const char[] szMessage, bool IsPhraseExists, bool IsTranslated)
 {
     static GlobalForward gf;
     if(!gf)
-        gf = new GlobalForward("cc_proc_OnDefMsg", ET_Hook, Param_String);
+        gf = new GlobalForward("cc_proc_OnDefMsg", ET_Hook, Param_String, Param_Cell, Param_Cell);
     
-    bool Send = true;
+    Action Send = (IsTranslated && IsPhraseExists) ? Plugin_Changed : Plugin_Continue;
     Call_StartForward(gf);
+
     Call_PushString(szMessage);
+    Call_PushCell(IsPhraseExists);
+    Call_PushCell(IsTranslated);
+
     Call_Finish(Send);
 
     return Send;

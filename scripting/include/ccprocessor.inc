@@ -45,14 +45,17 @@ forward bool cc_proc_SkipColorsInMsg(int iClient);
 forward void cc_proc_RebuildString(int iClient, int &pLevel, const char[] szBind, char[] szBuffer, int iSize);
 
 /*
- *	Calls when capturing a message from the server
+ *	Calls when capturing an engine message from the server
  *
- *	@param szMessage	Server msg
- *	@param MsgLen		Size of msg
+ *	@param szMessage			Key of engine message (with symbol[0] = '#')
+ *	@param IsPhraseExists		If key of engine message is exists
+ *	@param IsTranslated			If key of engine message is translated for LANG_SEVER
  *
- * 	@return				true - send / false - otherwise
+ * 	@return					Plugin_Changed	- send message for core processing
+								Plugin_Continue - exclude engine message processing
+								Plugin_Handled 	- exclude message sending by engine
 */
-forward bool cc_proc_OnDefMsg(const char[] szMessage);
+forward Action cc_proc_OnDefMsg(const char[] szMessage, bool IsPhraseExists, bool IsTranslated);
 
 /*
  *	Calls when the config reading is completed
