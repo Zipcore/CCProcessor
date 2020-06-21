@@ -22,7 +22,7 @@ public Plugin myinfo =
     name        = "CCProcessor",
     author      = "nullent?",
     description = "Color chat processor",
-    version     = "2.2.2",
+    version     = "2.2.3",
     url         = "discord.gg/ChTyPUG"
 };
 
@@ -221,7 +221,7 @@ public Action TextMessage_CallBack(UserMsg msg_id, Handle msg, const int[] playe
         return Plugin_Continue;
     }
 
-#define MAX_PARAMS 4
+#define MAX_PARAMS 5
 
     netMessage.Push(3);
     netMessage.PushString(szBuffer);
@@ -403,7 +403,7 @@ void PrepareDefMessage(char[] szMessage, int size)
 
     Format(szMessage, size, "%t", szMessage);
 
-    for(int i = 1; i <= MAX_PARAMS; i++)
+    for(int i = 1; i < MAX_PARAMS; i++)
     {
         FormatEx(szNum, sizeof(szNum), "{%i}", i);
         ReplaceString(szMessage, size, szNum, (i == 1) ? "%s1" : (i == 2) ? "%s2" : (i == 3) ? "%s3" : "%s4");
