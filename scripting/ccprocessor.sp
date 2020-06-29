@@ -22,7 +22,7 @@ public Plugin myinfo =
     name        = "CCProcessor",
     author      = "nullent?",
     description = "Color chat processor",
-    version     = "2.2.3",
+    version     = "2.2.4",
     url         = "discord.gg/ChTyPUG"
 };
 
@@ -225,10 +225,10 @@ public Action TextMessage_CallBack(UserMsg msg_id, Handle msg, const int[] playe
 
     netMessage.Push(3);
     netMessage.PushString(szBuffer);
-    ReadBfParams(msg);
-
     netMessage.PushArray(players, playersNum);
     netMessage.Push(playersNum);
+
+    ReadBfParams(msg);
     RequestFrame(SendSrvMsgSafly, msg_id);
     
     return Plugin_Handled;
@@ -240,7 +240,7 @@ void ReadBfParams(Handle msg)
 
     char szBuffer[MESSAGE_LENGTH];
 
-    while(message.BytesLeft != 0)
+    while(message.BytesLeft != 0 || message.BytesLeft != 1)
     {
         message.ReadString(szBuffer, sizeof(szBuffer));
         netMessage.PushString(szBuffer);
@@ -254,21 +254,25 @@ public void SendSrvMsgSafly(any data)
     char szMessage[MESSAGE_LENGTH];
     netMessage.GetString(1, SZ(szMessage));
 
-    int[] players = new int[netMessage.Get(len-1)];
-    netMessage.GetArray(len - 2, players, netMessage.Get(len-1));
+    int[] players = new int[netMessage.Get(3)];
+    netMessage.GetArray(2, players, netMessage.Get(3));
 
     char szParams[MAX_PARAMS][MESSAGE_LENGTH];
-    for(int i = 2, a; i < len-2; i++)
+
+    if(len > 4)
     {
-        netMessage.GetString(i, szParams[a], sizeof(szParams[]));
-        a++;
+        for(int i = 4, a; i < len; i++)
+        {
+            netMessage.GetString(i, szParams[a], sizeof(szParams[]));
+            a++;
+        }
     }
-        
+    
     BfWrite message = 
     view_as<BfWrite>(
         StartMessageEx(
             data, players, 
-            netMessage.Get(len - 1), 
+            netMessage.Get(3), 
             USERMSG_RELIABLE|USERMSG_BLOCKHOOKS
         )
     );
@@ -278,7 +282,8 @@ public void SendSrvMsgSafly(any data)
         message.WriteByte(netMessage.Get(0));
         message.WriteString(szMessage);
         for(int i; i < MAX_PARAMS; i++)
-            message.WriteString(szParams[i]);
+            if(szParams[i][0])
+                message.WriteString(szParams[i]);
 
         EndMessage();
     }
