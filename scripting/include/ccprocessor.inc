@@ -9,8 +9,8 @@ enum
 	eMsg_TEAM = 0,
 	eMsg_ALL,
 	eMsg_CNAME,
-	eMsg_SERVER,
 	eMsg_RADIO,
+	eMsg_SERVER,
 	
 	eMsg_MAX
 };

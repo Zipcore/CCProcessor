@@ -15,7 +15,7 @@ public Action UserMessage_RadioText(UserMsg msg_id, Handle msg, const int[] play
     szName = NULL_STRING;
     szBuffer = NULL_STRING;
 
-    static const char szMessage[] = "%s1";
+    static const char szMessage[] = "%s3";
     static const int iType = eMsg_RADIO; 
 
     static int iIndex, iBackupIndex;
@@ -56,9 +56,8 @@ public Action UserMessage_RadioText(UserMsg msg_id, Handle msg, const int[] play
     if(umType)
     {
         message = view_as<Protobuf>(msg);
-        message.SetInt("ent_idx", iIndex);
+        message.SetInt("client", iIndex);
         message.SetString("msg_name", szBuffer);
-        message.SetString("params", szKey, 0);
 
         RequestFrame(BackMode, iBackupIndex);
         return Plugin_Continue;
@@ -103,6 +102,8 @@ public void RadioText_Completed(UserMsg msgid, bool send)
                 message.WriteByte(3);
                 message.WriteByte(netMessage.Get(eIdx));
                 message.WriteString(szMessage);
+                message.WriteString("1");
+                message.WriteString("1");
                 message.WriteString(szKey);
                 EndMessage();
             }
