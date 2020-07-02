@@ -22,14 +22,15 @@ GlobalForward
     g_fwdConfigParsed,
     g_fwdMessageType,
     g_fwdOnMsgBuilt,
-    g_fwdIdxApproval;
+    g_fwdIdxApproval,
+    g_fwdRestrictRadio;
 
 public Plugin myinfo = 
 {
     name        = "CCProcessor",
     author      = "nullent?",
     description = "Color chat processor",
-    version     = "2.3.0",
+    version     = "2.4.0",
     url         = "discord.gg/ChTyPUG"
 };
 
@@ -50,6 +51,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
     HookUserMessage(GetUserMessageId("TextMsg"), UserMessage_TextMsg, true);
     HookUserMessage(GetUserMessageId("SayText2"), UserMessage_SayText2, true, SayText2_Completed);
+    HookUserMessage(GetUserMessageId("RadioText"), UserMessage_RadioText, true, RadioText_Completed);
 
     CreateNative("cc_drop_palette", Native_DropPalette);
     CreateNative("cc_clear_allcolors", Native_ClearAllColors);
@@ -61,6 +63,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
     g_fwdMessageType    = new GlobalForward("cc_proc_MsgBroadType", ET_Ignore, Param_Cell);
     g_fwdOnMsgBuilt     = new GlobalForward("cc_proc_OnMessageBuilt", ET_Ignore, Param_Cell, Param_String);
     g_fwdIdxApproval    = new GlobalForward("cc_proc_IndexApproval", ET_Ignore, Param_CellByRef);
+    g_fwdRestrictRadio  = new GlobalForward("cc_proc_RestrictRadio", ET_Hook, Param_Cell, Param_String);
 
     RegPluginLibrary("ccprocessor");
 
@@ -69,6 +72,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 #include "ccprocessor/ccp_saytext2.sp"
 #include "ccprocessor/ccp_textmsg.sp"
+#include "ccprocessor/ccp_radiomsg.sp"
 
 public void OnPluginStart()
 {
@@ -193,7 +197,8 @@ SMCResult OnKeyValue(SMCParser smc, const char[] sKey, const char[] sValue, bool
         iBuffer =   (!strcmp(sKey, "Chat_PrototypeTeam"))   ? eMsg_TEAM : 
                     (!strcmp(sKey, "Chat_PrototypeAll"))    ? eMsg_ALL : 
                     (!strcmp(sKey, "Changename_Prototype")) ? eMsg_CNAME : 
-                    (!strcmp(sKey, "Chat_ServerTemplate"))  ? eMsg_SERVER : -1;
+                    (!strcmp(sKey, "Chat_ServerTemplate"))  ? eMsg_SERVER :
+                    (!strcmp(sKey, "Chat_RadioText"))       ? eMsg_RADIO : -1;
         
         if(iBuffer != -1)
             strcopy(msgPrototype[iBuffer], sizeof(msgPrototype[]), sValue);
@@ -282,14 +287,17 @@ void GetMessageByPrototype(
     if(StrContains(szBuffer, "{TEAM}") != -1 && iType != eMsg_CNAME)
     {
         FormatEx(
-            Other, TEAM_LENGTH, "%t", 
+            Other, TEAM_LENGTH, "%T", 
             (iTeam == 1 && iType) ? "TeamSPECAll" : 
             (iTeam == 1 && !iType) ? "TeamSPEC" :
             (iTeam == 2 && iType) ? "TeamTAll" :
             (iTeam == 2 && !iType) ? "TeamT" :
             (iTeam == 3 && iType) ? "TeamCTAll" :
-            "TeamCT"
+            "TeamCT", (iIndex>0) ? iIndex : LANG_SERVER
         );
+
+        if(iType == eMsg_RADIO)
+            FormatEx(Other, TEAM_LENGTH, "%T", "RadioMsg", (iIndex>0) ? iIndex : LANG_SERVER);
         
         Call_RebuildString(iIndex, "{TEAM}", SZ(Other));
 
@@ -343,7 +351,7 @@ void GetMessageByPrototype(
         ReplaceString(szBuffer, iSize, "{MSGCO}", Other, true);
     }
 
-    if(StrContains(szBuffer, "{MSG}") != -1)
+    if(StrContains(szBuffer, "{MSG}") != -1 && iType != eMsg_RADIO)
     {
         Call_RebuildString(iIndex, "{MSG}", szMessage, MsgSize);
         TrimString(szMessage);
@@ -441,4 +449,16 @@ void Call_MessageBuilt(int iIndex, const char[] BuiltMessage)
     Call_PushCell(iIndex);
     Call_PushString(BuiltMessage)
     Call_Finish();
+}
+
+bool Call_RestrictRadioKey(int iIndex, const char[] szKey)
+{
+    bool restrict;
+
+    Call_StartForward(g_fwdRestrictRadio);
+    Call_PushCell(iIndex);
+    Call_PushString(szKey)
+    Call_Finish(restrict);
+
+    return restrict;
 }

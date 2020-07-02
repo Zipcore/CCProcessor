@@ -10,6 +10,7 @@ enum
 	eMsg_ALL,
 	eMsg_CNAME,
 	eMsg_SERVER,
+	eMsg_RADIO,
 	
 	eMsg_MAX
 };
@@ -94,6 +95,16 @@ forward void cc_proc_OnMessageBuilt(int iClient, const char[] szMessage);
  * 	@noreturn
 */
 forward void cc_proc_IndexApproval(int &iClientIndex);
+
+/*
+ *	Called when action is required on the radio key
+ *
+ *	@param iClient			Sender's index
+ *	@param szRKey			Radio key
+ *
+ * 	@return					true - restrict, false - otherwise
+*/
+forward bool cc_proc_RestrictRadio(int iClient, const char[] szRKey);
 
 /*
  *	Get a pallete
