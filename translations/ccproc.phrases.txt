@@ -38,8 +38,8 @@
 
     "RadioMsg"
     {
-        "ru"                "{V}(Radio)"
-        "en"                "{V}(Radio)"
+        "ru"                "{GO}(Radio)"
+        "en"                "{GO}(Radio)"
     }
 
     "ClientStatus_Alive"

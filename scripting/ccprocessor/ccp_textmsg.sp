@@ -13,6 +13,8 @@ public Action UserMessage_TextMsg(UserMsg msg_id, Handle msg, const int[] player
     if(!umType) BfReadString(msg, SZ(szMessage));
     else PbReadString(msg, "params", SZ(szMessage), 0);
 
+    //LogMessage(szMessage);
+
     if(szMessage[0] == '#')
     {
         Action defMessage = Call_OnDefMessage(szMessage, TranslationPhraseExists(szMessage), IsTranslatedForLanguage(szMessage, GetServerLanguage()));
