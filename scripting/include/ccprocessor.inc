@@ -3,13 +3,25 @@
 #endif
 #define _ccprocessor_included
 
+/* 
+API key:
+	The value changes if the API has been changed. 
+	This is a measure against users who do not follow the changes and do not understand what is happening.
+
+	ATTENTION: Do not change it yourself if you are not ready for the consequences!
+*/
+#define API_KEY "f340f1b1f65b6df5b5e3f94d95b11daf"
+
 // Types of message
 enum
 {
 	eMsg_TEAM = 0,
 	eMsg_ALL,
 	eMsg_CNAME,
-	eMsg_RADIO,
+
+	/* The bind '{MSG}' is not called for this type*/
+	eMsg_RADIO,	
+
 	eMsg_SERVER,
 	
 	eMsg_MAX
@@ -107,6 +119,15 @@ forward void cc_proc_IndexApproval(int &iClientIndex);
 forward bool cc_proc_RestrictRadio(int iClient, const char[] szRKey);
 
 /*
+ *	API hand shake
+ *
+ *	@param szAPIKey			API key that uses the core
+ *
+ * 	@noreturn
+*/
+forward void cc_proc_APIHandShake(const char[] szAPIKey);
+
+/*
  *	Get a pallete
  *
  *	@noparam
@@ -114,7 +135,6 @@ forward bool cc_proc_RestrictRadio(int iClient, const char[] szRKey);
  * 	@return				List:> Key:Value:Transl
 */
 native ArrayList cc_drop_palette();
-
 
 /*
  *	Removing colors from a string
@@ -125,6 +145,24 @@ native ArrayList cc_drop_palette();
  * 	@noreturn
 */
 native void cc_clear_allcolors(char[] szBuffer, int iSize);
+
+/*
+ *	Get the API key used by the core
+ *
+ *	@param szBuffer		API key
+ *
+ * 	@noreturn
+*/
+native void cc_get_APIKey(char[] szBuffer);
+
+/*
+ *	API key matching
+ *
+ *	@param szBuffer		API key
+ *
+ * 	@return				true - equal / false - otherwise
+*/
+native bool cc_is_APIEqual(const char[] szBuffer);
 
 public SharedPlugin __pl_ccprocessor= 
 {
@@ -142,5 +180,7 @@ public void __pl_ccprocessor_SetNTVOptional()
 {
 	MarkNativeAsOptional("cc_drop_palette");
 	MarkNativeAsOptional("cc_clear_allcolors");
+	MarkNativeAsOptional("cc_get_APIKey");
+	MarkNativeAsOptional("cc_is_APIEqual");
 }
 #endif

@@ -23,14 +23,15 @@ GlobalForward
     g_fwdMessageType,
     g_fwdOnMsgBuilt,
     g_fwdIdxApproval,
-    g_fwdRestrictRadio;
+    g_fwdRestrictRadio,
+    g_fwdAPIHandShake;
 
 public Plugin myinfo = 
 {
     name        = "CCProcessor",
     author      = "nullent?",
     description = "Color chat processor",
-    version     = "2.4.0",
+    version     = "2.4.1",
     url         = "discord.gg/ChTyPUG"
 };
 
@@ -55,6 +56,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
     CreateNative("cc_drop_palette", Native_DropPalette);
     CreateNative("cc_clear_allcolors", Native_ClearAllColors);
+    CreateNative("cc_get_APIKey", Native_GetAPIKey);
+    CreateNative("cc_is_APIEqual", Native_IsAPIEqual);
 
     g_fwdSkipColors     = new GlobalForward("cc_proc_SkipColorsInMsg", ET_Hook, Param_Cell);
     g_fwdRebuildString  = new GlobalForward("cc_proc_RebuildString", ET_Ignore, Param_Cell, Param_CellByRef, Param_String, Param_String, Param_Cell);
@@ -64,6 +67,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
     g_fwdOnMsgBuilt     = new GlobalForward("cc_proc_OnMessageBuilt", ET_Ignore, Param_Cell, Param_String);
     g_fwdIdxApproval    = new GlobalForward("cc_proc_IndexApproval", ET_Ignore, Param_CellByRef);
     g_fwdRestrictRadio  = new GlobalForward("cc_proc_RestrictRadio", ET_Hook, Param_Cell, Param_String);
+    g_fwdAPIHandShake   = new GlobalForward("cc_proc_APIHandShake", ET_Ignore, Param_String);
 
     RegPluginLibrary("ccprocessor");
 
@@ -94,6 +98,13 @@ public void OnPluginStart()
 
     game_mode.AddChangeHook(OnModChanged);
     game_mode.GetString(mode_default_value, sizeof(mode_default_value));
+}
+
+public void OnAllPluginsLoaded()
+{
+    Call_StartForward(g_fwdAPIHandShake);
+    Call_PushString(API_KEY);
+    Call_Finish();
 }
 
 public void OnModChanged(ConVar cvar, const char[] oldVal, const char[] newVal)
@@ -374,6 +385,24 @@ public int Native_ClearAllColors(Handle hPlugin, int iArgs)
     ReplaceColors(SZ(szBuffer), true);
 
     SetNativeString(1, SZ(szBuffer));
+}
+
+public int Native_GetAPIKey(Handle hPlugin, int iArgs)
+{
+    char szBuffer[PREFIX_LENGTH];
+    GetNativeString(1, SZ(szBuffer));
+
+    strcopy(SZ(szBuffer), API_KEY);
+
+    SetNativeString(1, SZ(szBuffer));
+}
+
+public int Native_IsAPIEqual(Handle hPlugin, int iArgs)
+{
+    char szBuffer[PREFIX_LENGTH];
+    GetNativeString(1, SZ(szBuffer));
+
+    return StrEqual(szBuffer, API_KEY, true);
 }
 
 public int Native_DropPalette(Handle hPlugins, int iArgs)

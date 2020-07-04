@@ -1,12 +1,5 @@
 public Action UserMessage_RadioText(UserMsg msg_id, Handle msg, const int[] players, int playersNum, bool reliable, bool init)
 {
-    /*
-        optional int32 msg_dst = 1;
-        optional int32 client = 2;
-        optional string msg_name = 3;
-        repeated string params = 4;
-    */
-
     if(((!umType) ? BfReadByte(msg) : PbReadInt(msg, "msg_dst")) != 3)
         return Plugin_Continue;
 
