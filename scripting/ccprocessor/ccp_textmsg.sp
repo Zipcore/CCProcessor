@@ -10,6 +10,9 @@ public Action UserMessage_TextMsg(UserMsg msg_id, Handle msg, const int[] player
     szBuffer = NULL_STRING;
     szMessage = NULL_STRING;
 
+    static Action defMessage;
+    defMessage = Plugin_Continue;
+
     if(!umType) BfReadString(msg, SZ(szMessage));
     else PbReadString(msg, "params", SZ(szMessage), 0);
 
@@ -17,7 +20,7 @@ public Action UserMessage_TextMsg(UserMsg msg_id, Handle msg, const int[] player
 
     if(szMessage[0] == '#')
     {
-        Action defMessage = Call_OnDefMessage(szMessage, TranslationPhraseExists(szMessage), IsTranslatedForLanguage(szMessage, GetServerLanguage()));
+        defMessage = Call_OnDefMessage(szMessage, TranslationPhraseExists(szMessage), IsTranslatedForLanguage(szMessage, GetServerLanguage()));
 
         if(defMessage == Plugin_Changed)
             PrepareDefMessage(SZ(szMessage));
@@ -49,7 +52,9 @@ public Action UserMessage_TextMsg(UserMsg msg_id, Handle msg, const int[] player
     netMessage.PushArray(players, playersNum);
     netMessage.Push(playersNum);
 
-    ReadBfParams(view_as<BfRead>(msg));
+    if(defMessage == Plugin_Changed)
+        ReadBfParams(view_as<BfRead>(msg));
+
     RequestFrame(TextMsg_Completed, msg_id);
     
     return Plugin_Handled;
@@ -69,8 +74,10 @@ public void TextMsg_Completed(any data)
     {
         for(int i = eAny, a; i < netMessage.Length; i++)
         {
-            netMessage.GetString(i, szParams[a], sizeof(szParams[]));
-            a++;
+            if(a >= MAX_PARAMS)
+                break;
+
+            netMessage.GetString(i, szParams[a++], sizeof(szParams[]));
         }
     }
     
@@ -88,8 +95,7 @@ public void TextMsg_Completed(any data)
         message.WriteByte(netMessage.Get(eIdx));
         message.WriteString(szMessage);
         for(int i; i < MAX_PARAMS; i++)
-            if(szParams[i][0])
-                message.WriteString(szParams[i]);
+            message.WriteString(szParams[i]);
 
         EndMessage();
     }
@@ -117,9 +123,9 @@ void PrepareDefMessage(char[] szMessage, int size)
 
     Format(szMessage, size, "%T", szMessage, LANG_SERVER);
 
-    for(int i = 1; i < MAX_PARAMS; i++)
+    for(int i = 1; i <= MAX_PARAMS; i++)
     {
         FormatEx(szNum, sizeof(szNum), "{%i}", i);
-        ReplaceString(szMessage, size, szNum, (i == 1) ? "%s1" : (i == 2) ? "%s2" : (i == 3) ? "%s3" : "%s4");
+        ReplaceString(szMessage, size, szNum, (i == 1) ? "%s1" : (i == 2) ? "%s2" : (i == 3) ? "%s3" : (i==4) ? "%s4" : "%s5");
     }
 }
