@@ -57,16 +57,16 @@ public void SayText_Completed(any data)
     ArrayList arr = view_as<ArrayList>(data);
 
     char szMessage[MESSAGE_LENGTH];
-    netMessage.GetString(eMsg, SZ(szMessage));
+    arr.GetString(eMsg, SZ(szMessage));
 
-    int[] players = new int[netMessage.Get(eCount)];
-    netMessage.GetArray(eArray, players, netMessage.Get(eCount));
+    int[] players = new int[arr.Get(eCount)];
+    arr.GetArray(eArray, players, arr.Get(eCount));
     
     BfWrite message = 
     view_as<BfWrite>(
         StartMessageEx(
-            netMessage.Get(eIdx), players, 
-            netMessage.Get(eCount), 
+            arr.Get(eIdx), players, 
+            arr.Get(eCount), 
             USERMSG_RELIABLE|USERMSG_BLOCKHOOKS
         )
     );
