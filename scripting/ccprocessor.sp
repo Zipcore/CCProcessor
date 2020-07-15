@@ -31,7 +31,7 @@ public Plugin myinfo =
     name        = "CCProcessor",
     author      = "nullent?",
     description = "Color chat processor",
-    version     = "2.5.1",
+    version     = "2.5.2",
     url         = "discord.gg/ChTyPUG"
 };
 

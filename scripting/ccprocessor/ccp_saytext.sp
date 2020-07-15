@@ -56,7 +56,7 @@ public void SayText_Completed(any data)
 {
     ArrayList arr = view_as<ArrayList>(data);
 
-    char szMessage[MESSAGE_LENGTH];
+    char szMessage[MAX_LENGTH];
     arr.GetString(eMsg, SZ(szMessage));
 
     int[] players = new int[arr.Get(eCount)];

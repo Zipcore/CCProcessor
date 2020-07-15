@@ -62,7 +62,7 @@ public Action UserMessage_TextMsg(UserMsg msg_id, Handle msg, const int[] player
 
 public void TextMsg_Completed(any data)
 {
-    char szMessage[MESSAGE_LENGTH];
+    char szMessage[MAX_LENGTH];
     netMessage.GetString(eMsg, SZ(szMessage));
 
     int[] players = new int[netMessage.Get(eCount)];
