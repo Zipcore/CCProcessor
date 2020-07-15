@@ -31,7 +31,7 @@ public Plugin myinfo =
     name        = "CCProcessor",
     author      = "nullent?",
     description = "Color chat processor",
-    version     = "2.4.2",
+    version     = "2.5.2",
     url         = "discord.gg/ChTyPUG"
 };
 
@@ -51,6 +51,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
     umType = GetUserMessageType();
 
     HookUserMessage(GetUserMessageId("TextMsg"), UserMessage_TextMsg, true);
+    HookUserMessage(GetUserMessageId("SayText"), UserMessage_SayText, true);
     HookUserMessage(GetUserMessageId("SayText2"), UserMessage_SayText2, true, SayText2_Completed);
     HookUserMessage(GetUserMessageId("RadioText"), UserMessage_RadioText, true, RadioText_Completed);
 
@@ -75,6 +76,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 }
 
 #include "ccprocessor/ccp_saytext2.sp"
+#include "ccprocessor/ccp_saytext.sp"
 #include "ccprocessor/ccp_textmsg.sp"
 #include "ccprocessor/ccp_radiomsg.sp"
 
