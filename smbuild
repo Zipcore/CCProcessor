@@ -1,9 +1,0 @@
-Plugin(source='scripting/ccprocessor.sp')
-
-
-Package(name='ccproc-release',
-        plugins=['ccprocessor'],
-        filegroups={
-            '.': ['LICENSE' , 'README.md'],
-        },
-)

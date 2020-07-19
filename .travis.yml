@@ -1,34 +1,31 @@
-language: minimal
-sudo: false
+dist: xenial
+os: linux
 
 addons:
     apt_packages:
-        - lib32stdc++6  # needed for spcomp
+        - lib32z1
+        - lib32stdc++6
+
+language: c
 
 env:
+  global:
+    
+    - INCLUDE=addons/sourcemod/scripting/include
+    - SCRIPTING=addons/sourcemod/scripting
+  jobs:
     - SMVERSION=1.10
 
+install:
+    - wget --input-file=http://sourcemod.net/smdrop/$SMVERSION/sourcemod-latest-linux
+    - tar -xzf $(cat sourcemod-latest-linux)
 before_script:
-
-    - git clone https://github.com/splewis/sm-builder
-    - cd sm-builder
-    - pip install --user -r requirements.txt
-    - python setup.py install --prefix=~/.local
-    - cd ..
-
-    - SMPACKAGE="http://sourcemod.net/latest.php?os=linux&version=${SMVERSION}"
-    - wget $SMPACKAGE
-    - tar xfz $(basename $SMPACKAGE)
-    - cd addons/sourcemod/scripting/
-    - chmod +x spcomp
-    - PATH+=":$PWD"
-
-    - cd include
-    - cp ../../../../scripting/include/* .
-    - cd ../../../..
+    - chmod +x $SCRIPTING/spcomp
+    - mkdir $SCRIPTING/compiled
+    - cp -R scripting addons/sourcemod/
 
 script:
-    - smbuilder --flags="-E"
-    
+    - $SCRIPTING/spcomp -E -o$SCRIPTING'/compiled/ccprocessor' -v0 $SCRIPTING'/ccprocessor.sp'
+
 notifications:
     email: false
