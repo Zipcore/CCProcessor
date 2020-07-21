@@ -4,162 +4,189 @@
     {
         "ru"                "{T}(T)"
         "en"                "{T}(T)"
+        "pl"                "{T}(T)"
     }
 
     "TeamT"
     {
         "ru"                "{T}(Private T)"
         "en"                "{T}(Private T)"
+        "pl"                "{T}(Private CT)"
     }
 
     "TeamCTAll"
     {
         "ru"                "{T}(CT)"
         "en"                "{T}(CT)"
+        "pl"                "{T}(CT)"
     }
 
     "TeamCT"
     {
         "ru"                "{T}(Private CT)"
         "en"                "{T}(Private CT)"
+        "pl"                "{T}(Private CT)"
     }
 
     "TeamSPECAll"
     {
         "ru"                "{T}(SPEC)"
         "en"                "{T}(SPEC)"
+        "pl"                "{T}(SPEC)"
     }
 
     "TeamSPEC"
     {
         "ru"                "{T}(Private SPEC)"
         "en"                "{T}(Private SPEC)"
+        "pl"                "{T}(Private SPEC)"
     }
 
     "RadioMsg"
     {
         "ru"                "{GO}(Radio)"
         "en"                "{GO}(Radio)"
+        "pl"                "{GO}(Radio)"
     }
 
     "ClientStatus_Alive"
     {
         "ru"                "{G}•"
         "en"                "{G}•"
+        "pl"                "{G}•"
     }
 
     "ClientStatus_Died"
     {
         "ru"                "{R}•"
         "en"                "{R}•"
+        "pl"                "{R}•"
     }
 
     "color_white"
     {
         "ru"                "{W}Белый"
         "en"                "{W}White"
+        "pl"                "{W}Biały"
     }
 
     "color_red"
     {
         "ru"                "{R}Красный"
         "en"                "{R}Red"
+        "pl"                "{R}Czerwony"
     }
 
     "color_team"
     {
         "ru"                "{T}Командный"
         "en"                "{T}Team"
+        "pl"                "{T}Team"
     }
 
     "color_green"
     {
         "ru"                "{G}Зеленый"
         "en"                "{G}Green"
+        "pl"                "{G}Zielony"
     }
 
     "color_pistachio"
     {
         "ru"                "{P}Фисташшковый"
         "en"                "{P}Pistachio"
+        "pl"                "{P}Pistacjowy"
     }
 
     "color_lgreen"
     {
         "ru"                "{LG}Светло-зеленый"
         "en"                "{LG}Light green"
+        "pl"                "{LG}Jasny zielony"
     }
 
     "color_scarlet"
     {
         "ru"                "{S}Алый"
         "en"                "{S}Scarlet"
+        "pl"                "{S}Szkarłatny"
     }
 
     "color_grey"
     {
         "ru"                "{GR}Серый"
         "en"                "{GR}Grey"
+        "pl"                "{GR}Szary"
     }
 
     "color_banana"
     {
         "ru"                "{BA}Банановый"
         "en"                "{BA}Banana"
+        "pl"                "{BA}Bananowy"
     }
 
     "color_dgrey"
     {
         "ru"                "{DG}Песочно-серый"
         "en"                "{DG}Dusty-grey"
+        "pl"                "{DG}Popielaty"
     }
 
     "color_cyan"
     {
         "ru"                "{C}Голубой"
         "en"                "{C}Cyan"
+        "pl"                "{C}Cyjanowy"
     }
 
     "color_blue"
     {
         "ru"                "{B}Синий"
         "en"                "{B}Blue"
+        "pl"                "{B}Niebieski"
     }
 
     "color_violet"
     {
         "ru"                "{V}Фиалковый"
         "en"                "{V}Violet"
+        "pl"                "{V}Fioletowy"
     }
 
     "color_pink"
     {
         "ru"                "{PI}Розовый"
         "en"                "{PI}Pink"
+        "pl"                "{PI}Różowy"
     }
 
     "color_coralline"
     {
         "ru"                "{CO}Коралловый"
         "en"                "{CO}Сoralline"
+        "pl"                "{CO}Koralowy"
     }
 
     "color_gold"
     {
         "ru"                "{GO}Золотой"
         "en"                "{GO}Gold"
+        "pl"                "{GO}Złoty"
     }
 
     "list_of_prefix"
     {
         "ru"                "Список доступных префиксов:"
         "en"                "List of prefixes:"
+        "pl"                "Lista prefixów:"
     }
 
     "ccp_disable"
     {
         "ru"                "Убрать"
         "en"                "Remove"
+        "pl"                "Usuń"
     }
 
     "ccp_prefix_changed"
@@ -168,6 +195,7 @@
 
         "ru"                "{G}[INDPREF] {W}Ваш префикс изменен на: {G}{1}"
         "en"                "{G}[INDPREF] {W}Your prefix was changed to {G}{1}"
+        "pl"                "{G}[INDPREF] {W}Twój prefix został zmieniony na {G}{1}"
     }
 
 }
