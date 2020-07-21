@@ -26,12 +26,14 @@ GlobalForward
     g_fwdRestrictRadio,
     g_fwdAPIHandShake;
 
+bool g_bRTP;
+
 public Plugin myinfo = 
 {
     name        = "CCProcessor",
     author      = "nullent?",
     description = "Color chat processor",
-    version     = "2.5.2",
+    version     = "2.5.3",
     url         = "discord.gg/ChTyPUG"
 };
 
@@ -91,6 +93,10 @@ public void OnPluginStart()
     if(!DirExists("/cfg/ccprocessor"))
         CreateDirectory("/cfg/ccprocessor", 0x1ED);
 
+    CreateConVar("ccp_color_RTP", "0", "Enable/Disable color real time processing", _, true, 0.0, true, 1.0).AddChangeHook(CCP_RTP);
+
+    AutoExecConfig(true, "core", "ccprocessor");
+
     game_mode = FindConVar("game_mode");
     if(!game_mode)
     {
@@ -114,8 +120,15 @@ public void OnModChanged(ConVar cvar, const char[] oldVal, const char[] newVal)
     cvar.GetString(mode_default_value, sizeof(mode_default_value));
 }
 
+public void CCP_RTP(ConVar cvar, const char[] oldVal, const char[] newVal)
+{
+    g_bRTP = cvar.BoolValue;
+}
+
 public void OnMapStart()
 {
+    CCP_RTP(FindConVar("ccp_color_RTP"), NULL_STRING, NULL_STRING);
+
 #define SETTINGS_PATH "configs/c_var/%s.ini"
 
     static char szConfig[MESSAGE_LENGTH];
@@ -446,7 +459,7 @@ Action Call_OnDefMessage(const char[] szMessage, bool IsPhraseExists, bool IsTra
 
 bool Call_IsSkipColors(int iClient)
 {
-    bool skip = false;
+    bool skip = g_bRTP;
 
     Call_StartForward(g_fwdSkipColors);
     Call_PushCell(iClient);
