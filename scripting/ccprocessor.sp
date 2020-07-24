@@ -2,6 +2,8 @@
 
 #include <ccprocessor>
 
+static char g_szLogEx[MESSAGE_LENGTH] = "logs/ccprocessor"
+
 UserMessageType umType;
 
 ArrayList 
@@ -26,7 +28,7 @@ GlobalForward
     g_fwdRestrictRadio,
     g_fwdAPIHandShake;
 
-bool g_bRTP;
+bool g_bRTP, g_bDBG;
 
 public Plugin myinfo = 
 {
@@ -90,10 +92,20 @@ public void OnPluginStart()
     aPalette = new ArrayList(PREFIX_LENGTH, 0);
     netMessage = new ArrayList(MAX_LENGTH, 0);
 
-    if(!DirExists("/cfg/ccprocessor"))
-        CreateDirectory("/cfg/ccprocessor", 0x1ED);
+    {
+        if(!DirExists("/cfg/ccprocessor"))
+            CreateDirectory("/cfg/ccprocessor", 0x1ED);
+    
+        BuildPath(Path_SM, g_szLogEx, sizeof(g_szLogEx), g_szLogEx);
 
+        if(!DirExists(g_szLogEx))
+            CreateDirectory(g_szLogEx, 0x1ED);
+
+        Format(g_szLogEx, sizeof(g_szLogEx), "%s/logging.log", g_szLogEx);
+    }
+    
     CreateConVar("ccp_color_RTP", "0", "Enable/Disable color real time processing", _, true, 0.0, true, 1.0).AddChangeHook(CCP_RTP);
+    CreateConVar("ccp_debug_mode", "0", "Enable/Disable debug mode", _, true, 0.0, true, 1.0).AddChangeHook(CCP_DBG);
 
     AutoExecConfig(true, "core", "ccprocessor");
 
@@ -125,9 +137,15 @@ public void CCP_RTP(ConVar cvar, const char[] oldVal, const char[] newVal)
     g_bRTP = cvar.BoolValue;
 }
 
+public void CCP_DBG(ConVar cvar, const char[] oldVal, const char[] newVal)
+{
+    g_bDBG = cvar.BoolValue;
+}
+
 public void OnMapStart()
 {
     CCP_RTP(FindConVar("ccp_color_RTP"), NULL_STRING, NULL_STRING);
+    CCP_DBG(FindConVar("ccp_debug_mode"), NULL_STRING, NULL_STRING);
 
 #define SETTINGS_PATH "configs/c_var/%s.ini"
 
@@ -155,6 +173,8 @@ public void OnMapStart()
     int iLine;
     if(smParser.ParseFile(szConfig, iLine) != SMCError_Okay)
         LogError("An error was detected on line '%i' while reading", iLine);
+    
+    LOG_WRITE("OnMapStart(): Config: %s, Pallete array: %x, Parser: %x", szConfig, aPalette, smParser);
 }
 
 public void OnConfigsExecuted()
@@ -175,8 +195,12 @@ SMCResult OnEnterSection(SMCParser smc, const char[] name, bool opt_quotes)
 {
     // main ++ > 1 Palette ++ > 2 Key
     if(Section > 1)
+    {
         aPalette.PushString(name);
 
+        LOG_WRITE("OnEnterSection(): %s", name);
+    }
+        
     Section++;
 
     return SMCParse_Continue;
@@ -216,6 +240,8 @@ SMCResult OnKeyValue(SMCParser smc, const char[] sKey, const char[] sValue, bool
 
         aPalette.PushString(szExplode[0]);
         aPalette.PushString(szExplode[1]);
+
+        LOG_WRITE("OnKeyValue(): ReadKey: %s, Value[0]: %s, Value[1]: %s", sKey, szExplode[0], szExplode[1]);
     }
 
     else
@@ -228,6 +254,8 @@ SMCResult OnKeyValue(SMCParser smc, const char[] sKey, const char[] sValue, bool
         
         if(iBuffer != -1)
             strcopy(msgPrototype[iBuffer], sizeof(msgPrototype[]), sValue);
+
+        LOG_WRITE("OnKeyValue(): ReadKey: %s, Value: %s", sKey, sValue);
     }
 
     return SMCParse_Continue;
@@ -287,13 +315,15 @@ void GetMessageByPrototype(
     static char Other[MESSAGE_LENGTH];
     Other = NULL_STRING;
 
-    SetGlobalTransTarget(iIndex);
-
     Call_MessageBroadType(iType);
 
     FormatEx(szBuffer, iSize, msgPrototype[iType]);
+    
+    LOG_WRITE("GetMessageByPrototype(): prototype before call: %s", szBuffer);
 
     Call_RebuildString(iIndex, "{PROTOTYPE}", szBuffer, iSize);
+
+    LOG_WRITE("GetMessageByPrototype(): prototype after call: %s", szBuffer);
 
     if(!szBuffer[0])
         return;
@@ -306,6 +336,8 @@ void GetMessageByPrototype(
 
         Call_RebuildString(iIndex, "{STATUS}", SZ(Other));
 
+        LOG_WRITE("GetMessageByPrototype(): {STATUS} after call: %s", Other);
+
         BreakPoint(Other, STATUS_LENGTH);
         ReplaceString(szBuffer, iSize, "{STATUS}", Other, true);
     }
@@ -315,6 +347,8 @@ void GetMessageByPrototype(
         GetTeamPhrase(LANG_SERVER, iTeam, iType, SZ(Other));
         
         Call_RebuildString(iIndex, "{TEAM}", SZ(Other));
+
+        LOG_WRITE("GetMessageByPrototype(): {TEAM} after call: %s", Other);
 
         BreakPoint(Other, TEAM_LENGTH);
         ReplaceString(szBuffer, iSize, "{TEAM}", Other, true);
@@ -327,6 +361,8 @@ void GetMessageByPrototype(
 
         Call_RebuildString(iIndex, "{PREFIXCO}", SZ(Other));
 
+        LOG_WRITE("GetMessageByPrototype(): {PREFIXCO} after call: %s", Other);
+
         BreakPoint(Other, STATUS_LENGTH);        
         ReplaceString(szBuffer, iSize, "{PREFIXCO}", Other, true);
     }
@@ -337,6 +373,8 @@ void GetMessageByPrototype(
 
         Call_RebuildString(iIndex, "{PREFIX}", SZ(Other));
 
+        LOG_WRITE("GetMessageByPrototype(): {PREFIX} after call: %s", Other);
+
         BreakPoint(Other, PREFIX_LENGTH);        
         ReplaceString(szBuffer, iSize, "{PREFIX}", Other, true);
     }
@@ -346,6 +384,8 @@ void GetMessageByPrototype(
         FormatEx(SZ(Other), "%c", 3);
         Call_RebuildString(iIndex, "{NAMECO}", SZ(Other));
 
+        LOG_WRITE("GetMessageByPrototype(): {NAMECO} after call: %s", Other);
+
         BreakPoint(Other, STATUS_LENGTH);        
         ReplaceString(szBuffer, iSize, "{NAMECO}", Other, true);
     }
@@ -353,6 +393,9 @@ void GetMessageByPrototype(
     if(StrContains(szBuffer, "{NAME}") != -1)
     {
         Call_RebuildString(iIndex, "{NAME}", szName, NameSize);
+
+        LOG_WRITE("GetMessageByPrototype(): {NAME} after call: %s", szName);
+
         ReplaceString(szBuffer, iSize, "{NAME}", szName, true);
     }
 
@@ -360,6 +403,8 @@ void GetMessageByPrototype(
     {
         FormatEx(SZ(Other), "%c", 1);
         Call_RebuildString(iIndex, "{MSGCO}", SZ(Other));
+
+        LOG_WRITE("GetMessageByPrototype(): {MSGCO} after call: %s", Other);
 
         BreakPoint(Other, STATUS_LENGTH);        
         ReplaceString(szBuffer, iSize, "{MSGCO}", Other, true);
@@ -370,8 +415,12 @@ void GetMessageByPrototype(
         Call_RebuildString(iIndex, "{MSG}", szMessage, MsgSize);
         TrimString(szMessage);
 
+        LOG_WRITE("GetMessageByPrototype(): {MSG} after call: %s", szMessage);
+
         ReplaceString(szBuffer, iSize, "{MSG}", szMessage, true);
     }
+
+    LOG_WRITE("GetMessageByPrototype(): Message after build: %s", szBuffer);
 }
 
 void BreakPoint(char[] szValue, int MaxLength)
@@ -400,6 +449,18 @@ void GetTeamPhrase(int iLangI, int iTeam, int iType, char[] szBuffer, int size)
             default: return;
         }
     }
+}
+
+void LOG_WRITE(const char[] szMessage, any ...)
+{
+    if(!g_bDBG)
+        return;
+    
+    static char szBuffer[1024];
+
+    VFormat(szBuffer, sizeof(szBuffer), szMessage, 2);
+
+    LogToFileEx(g_szLogEx, szMessage);
 }
 
 public int Native_ClearAllColors(Handle hPlugin, int iArgs)
@@ -443,6 +504,8 @@ void Call_OnCompReading()
 
 void Call_RebuildString(int iClient, const char[] szBind, char[] szMessage, int iSize)
 {
+    LOG_WRITE("Call_RebuildString(): %i, %s, %s, %i", iClient, szBind, szMessage, iSize);
+
     int plevel;
     Call_StartForward(g_fwdRebuildString);
     Call_PushCell(iClient);
@@ -464,6 +527,8 @@ Action Call_OnDefMessage(const char[] szMessage, bool IsPhraseExists, bool IsTra
 
     Call_Finish(Send);
 
+    LOG_WRITE("Call_OnDefMessage(): %s, %b, %b, result: %d", szMessage, IsPhraseExists, IsTranslated, Send);
+
     return Send;
 }
 
@@ -475,11 +540,15 @@ bool Call_IsSkipColors(int iClient)
     Call_PushCell(iClient);
     Call_Finish(skip);
 
+    LOG_WRITE("Call_IsSkipColors(): %i, %b", iClient, skip);
+
     return skip;
 }
 
 void Call_MessageBroadType(const int iType)
 {
+    LOG_WRITE("Call_MessageBroadType(): %i", iType);
+
     Call_StartForward(g_fwdMessageType);
     Call_PushCell(iType);
     Call_Finish();
@@ -495,10 +564,14 @@ void Call_IndexApproval(int &iIndex)
 
     if(iIndex < 1)
         iIndex = back;
+
+    LOG_WRITE("Call_IndexApproval(): %i, %i", iIndex, back);
 }
 
 void Call_MessageBuilt(int iIndex, const char[] BuiltMessage)
 {
+    LOG_WRITE("Call_MessageBuilt(): %i, %s", iIndex, BuiltMessage);
+
     Call_StartForward(g_fwdOnMsgBuilt);
     Call_PushCell(iIndex);
     Call_PushString(BuiltMessage)
