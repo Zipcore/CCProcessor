@@ -33,7 +33,7 @@ public Plugin myinfo =
     name        = "CCProcessor",
     author      = "nullent?",
     description = "Color chat processor",
-    version     = "2.5.3",
+    version     = "2.5.4",
     url         = "discord.gg/ChTyPUG"
 };
 
@@ -285,7 +285,7 @@ void GetMessageByPrototype(
 )
 {
     static char Other[MESSAGE_LENGTH];
-    Other = "";
+    Other = NULL_STRING;
 
     SetGlobalTransTarget(iIndex);
 
@@ -302,7 +302,7 @@ void GetMessageByPrototype(
     
     if(StrContains(szBuffer, "{STATUS}") != -1)
     {
-        FormatEx(SZ(Other), "%t", (IsAlive) ? "ClientStatus_Alive" : "ClientStatus_Died");
+        FormatEx(SZ(Other), "%T", (IsAlive) ? "ClientStatus_Alive" : "ClientStatus_Died", LANG_SERVER);
 
         Call_RebuildString(iIndex, "{STATUS}", SZ(Other));
 
@@ -312,18 +312,7 @@ void GetMessageByPrototype(
 
     if(StrContains(szBuffer, "{TEAM}") != -1 && iType != eMsg_CNAME)
     {
-        FormatEx(
-            Other, TEAM_LENGTH, "%T", 
-            (iTeam == 1 && iType) ? "TeamSPECAll" : 
-            (iTeam == 1 && !iType) ? "TeamSPEC" :
-            (iTeam == 2 && iType) ? "TeamTAll" :
-            (iTeam == 2 && !iType) ? "TeamT" :
-            (iTeam == 3 && iType) ? "TeamCTAll" :
-            "TeamCT", (iIndex>0) ? iIndex : LANG_SERVER
-        );
-
-        if(iType == eMsg_RADIO)
-            FormatEx(Other, TEAM_LENGTH, "%T", "RadioMsg", (iIndex>0) ? iIndex : LANG_SERVER);
+        GetTeamPhrase(LANG_SERVER, iTeam, iType, SZ(Other));
         
         Call_RebuildString(iIndex, "{TEAM}", SZ(Other));
 
@@ -334,7 +323,8 @@ void GetMessageByPrototype(
     // This isn't the best solution, but so far everything is in order.... i think.
     if(StrContains(szBuffer, "{PREFIXCO}") != -1)
     {
-        Other = "";
+        Other = NULL_STRING;
+
         Call_RebuildString(iIndex, "{PREFIXCO}", SZ(Other));
 
         BreakPoint(Other, STATUS_LENGTH);        
@@ -343,7 +333,8 @@ void GetMessageByPrototype(
 
     if(StrContains(szBuffer, "{PREFIX}") != -1)
     {
-        Other = "";
+        Other = NULL_STRING;
+
         Call_RebuildString(iIndex, "{PREFIX}", SZ(Other));
 
         BreakPoint(Other, PREFIX_LENGTH);        
@@ -361,9 +352,6 @@ void GetMessageByPrototype(
 
     if(StrContains(szBuffer, "{NAME}") != -1)
     {
-        // if(!iIndex && iType == eMsg_SERVER)
-        //    FormatEx(szName, NameSize, "CONSOLE");
-            
         Call_RebuildString(iIndex, "{NAME}", szName, NameSize);
         ReplaceString(szBuffer, iSize, "{NAME}", szName, true);
     }
@@ -390,6 +378,28 @@ void BreakPoint(char[] szValue, int MaxLength)
 {
     if(strlen(szValue) >= MaxLength)
         szValue[MaxLength] = 0;
+}
+
+void GetTeamPhrase(int iLangI, int iTeam, int iType, char[] szBuffer, int size)
+{
+    szBuffer[0] = '\0';
+
+    if(iType == eMsg_CNAME || iTeam == eMsg_SERVER)
+        return;
+    
+    if(iType == eMsg_RADIO)
+        FormatEx(szBuffer, size, "%T", "RadioMsg", iLangI);
+    
+    else
+    {
+        switch(iTeam)
+        {
+            case 1: FormatEx(szBuffer, size, "%T", (iType) ? "TeamSPECAll"  : "TeamSPEC",   iLangI);
+            case 2: FormatEx(szBuffer, size, "%T", (iType) ? "TeamTAll"     : "TeamT",      iLangI);
+            case 3: FormatEx(szBuffer, size, "%T", (iType) ? "TeamCTAll"    : "TeamCT",     iLangI);
+            default: return;
+        }
+    }
 }
 
 public int Native_ClearAllColors(Handle hPlugin, int iArgs)
